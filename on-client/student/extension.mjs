@@ -530,15 +530,24 @@ function renderExplanation({ event, explanation } = {}) {
   }
   if (result.status === 'error') {
     const message = result.error && result.error.message ? result.error.message : '확인 불가';
+    // 연결 점검(모델 목록)이 성공해도 사건 설명 호출은 따로 실패할 수 있다. 원인을 연결 점검과 같은 기준으로 나눠 안내한다.
+    const [category, guide] = classifyAiError(result.error && result.error.code);
     root.append(
-      node('p', `AI 설명을 받지 못했습니다: ${raw(result.error && result.error.code)} · ${message}`, 'explanation-error'),
-      node('p', '사건 기록은 그대로입니다. 설명 실패는 접속 판정이나 기록을 바꾸지 않습니다.'),
+      node('p', `AI 설명을 받지 못했습니다: ${category}`, 'explanation-error'),
+      node('p', `오류 코드: ${raw(result.error && result.error.code)} · 메시지: ${message}`),
+      node('p', guide),
+      node('p', '사건 설명 호출은 연결 점검과 별개입니다. 연결 점검이 성공했더라도 이 사건의 설명이 성공한 것은 아닙니다.'),
+      node('p', '사건 기록은 그대로입니다. 설명 실패는 접속 판정이나 기록을 바꾸지 않습니다. 다시 요청은 사용자가 직접 누릅니다.'),
     );
     return root;
   }
   if (result.status === 'ok' && result.data && typeof result.data.summary === 'string') {
     root.dataset.studentExplanationEvent = event.id;
-    root.append(node('p', `사건 ID: ${event.id}`), node('p', `설명 요약: ${result.data.summary}`));
+    root.append(
+      node('p', `사건 ID: ${event.id}`),
+      node('p', `설명 요약: ${result.data.summary}`),
+      node('p', '이 설명은 이 사건에 대한 사건 설명 요청의 응답입니다. 연결 점검(모델 목록)의 결과와 별개입니다.'),
+    );
     return root;
   }
   root.append(node('p', 'AI 설명 요청 전이거나 결과를 확인할 수 없습니다. 기록은 그대로입니다.', 'explanation-idle'));
