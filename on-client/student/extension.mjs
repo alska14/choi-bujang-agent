@@ -667,6 +667,104 @@ function renderExplanation({ event, explanation } = {}) {
   return root;
 }
 
+// ---------- 19단계: 보안 조치 요청 상태와 실제 결과 구분 ----------
+// 제안·사람 확인·서버 접수(ACK)·연동 시스템의 효과 관측을 서로 다른 문장으로 보여 준다. 버튼·요청·확인 번호는 다루지 않는다.
+const ACTION_STATUS = {
+  idle: '아직 미실행(idle)',
+  loading: '조치 준비 또는 연동 시스템 결과 조회 중(loading) · 결과가 아직 확인되지 않았습니다',
+  prepared: '준비됨·미실행(prepared) · 사람 확인 전이며 아직 실행되지 않았습니다',
+  executing: '서버에 전달 중(executing) · 결과가 아직 확인되지 않았습니다',
+  pending: '서버 접수·처리 중(pending) · 서버가 받았다는 응답(ACK)은 효과 확인이 아닙니다',
+  denied: '연동 시스템 거절(denied)',
+  failed: '연동 시스템 실패(failed)',
+  unknown: '결과 불명(unknown) · 효과 없음으로도 성공으로도 판단하지 않습니다',
+  expired: '확인 기한 지남(expired) · 이번 준비로는 집행할 수 없습니다',
+  error: '요청 처리 안 됨(error)',
+};
+const REQUERY_HINT = '「연동 시스템 결과만 재조회」를 직접 눌러 결과만 다시 조회하세요. 이 앱은 자동으로 다시 조회하지 않습니다.';
+
+function renderAction({ status, event, actionId, target, receipt, observation, message, confirmationExpiresAt, error } = {}) {
+  const root = node('div', null, 'student-action');
+  const code = status == null ? 'idle' : status;
+  const eventId = event && typeof event.id === 'string' && event.id ? event.id : null;
+  const safeReceipt = receipt && typeof receipt === 'object' ? receipt : null;
+
+  // 현재 사건·조치와 다른 영수증은 다른 요청의 결과이므로 표시하지 않는다.
+  if (safeReceipt && ((typeof safeReceipt.eventId === 'string' && safeReceipt.eventId !== eventId)
+    || (typeof safeReceipt.actionId === 'string' && typeof actionId === 'string' && safeReceipt.actionId !== actionId))) {
+    root.append(
+      node('p', `조치 결과 표시 불가: 현재 사건·조치와 맞지 않는 결과입니다(상태 원래 값: ${raw(status)})`, 'action-error'),
+      node('p', '다른 사건이나 다른 조치의 결과로 보여 주지 않습니다. 조치 화면은 현재 사건 기준으로 다시 준비해야 합니다.'),
+    );
+    return root;
+  }
+
+  const confirmed = code === 'succeeded' && !!observation && typeof observation === 'object' && observation.effectApplied === true;
+  const unconfirmedSucceeded = code === 'succeeded' && !confirmed;
+  const known = Object.prototype.hasOwnProperty.call(ACTION_STATUS, code);
+
+  let headline;
+  if (confirmed) headline = '효과 확인(succeeded) · 연동 시스템이 관측한 결과입니다';
+  else if (unconfirmedSucceeded) headline = '결과 불명(unknown) · 상태는 succeeded 이지만 연동 시스템의 효과 관측(effectApplied: true)이 확인되지 않았습니다';
+  else if (known) headline = ACTION_STATUS[code];
+  else headline = `조치 상태 확인 불가(${raw(status)}) · 성공으로 다루지 않습니다`;
+  root.append(node('p', headline, confirmed ? 'action-observed' : 'action-status'));
+
+  if (code === 'idle') {
+    root.append(
+      node('p', typeof message === 'string' && message ? message : '조치 제안은 아직 실행되지 않았습니다.'),
+      node('p', '이 기록에 연동 시스템이 지원하는 조치(supportedActions)가 없으면 조치 준비 버튼이 나오지 않는 것이 정상입니다.'),
+    );
+    return root;
+  }
+  if (code === 'prepared') root.append(node('p', '실행은 제공 화면의 「대상과 조치를 확인했으며 집행합니다」로 사람이 직접 합니다. 이 화면에는 실행 버튼이 없습니다.'));
+  if (code === 'pending' || code === 'executing') root.append(node('p', REQUERY_HINT));
+  if (code === 'unknown' || unconfirmedSucceeded) root.append(node('p', REQUERY_HINT));
+  if (code === 'expired') root.append(node('p', '조치를 다시 준비하세요. 이전 준비의 확인 기한은 지났습니다.'));
+  if (code === 'denied' || code === 'failed') {
+    const text = typeof message === 'string' && message ? message : (error && error.message) || '메시지 없음';
+    root.append(node('p', `메시지: ${text}`));
+  }
+  if (code === 'error' || (error && (code === 'expired' || code === 'unknown'))) {
+    root.append(node('p', `오류 코드: ${raw(error && error.code)} · 메시지: ${(error && error.message) || '확인 불가'}`));
+  }
+
+  const rows = [];
+  if (eventId) rows.push(['사건 ID', eventId]);
+  const evidenceIds = event && Array.isArray(event.evidence) ? event.evidence.map((item) => item && item.id).filter((id) => typeof id === 'string' && id) : [];
+  if (evidenceIds.length > 0) rows.push(['근거 ID', evidenceIds.join(', ')]);
+  if (typeof actionId === 'string' && actionId) rows.push(['조치(actionId)', actionId]);
+  if (target && typeof target === 'object' && typeof target.id === 'string') rows.push(['실제 대상(target.id)', target.id]);
+  if (target && typeof target === 'object' && Number.isFinite(target.generation)) rows.push(['대상 세대(generation)', String(target.generation)]);
+  if (safeReceipt) {
+    if (typeof safeReceipt.requestId === 'string') rows.push(['요청(requestId)', safeReceipt.requestId]);
+    if (typeof safeReceipt.receiptId === 'string') rows.push(['영수증(receiptId)', safeReceipt.receiptId]);
+    if (Number.isFinite(safeReceipt.version)) rows.push(['버전(version)', String(safeReceipt.version)]);
+    if (typeof safeReceipt.replayed === 'boolean') rows.push(['기존 요청 재응답(replayed)', String(safeReceipt.replayed)]);
+  }
+  if ((code === 'prepared' || code === 'expired') && typeof confirmationExpiresAt === 'string' && confirmationExpiresAt) {
+    rows.push(['사람 확인 기한', timeText(confirmationExpiresAt)]);
+  }
+  if (observation && typeof observation === 'object') {
+    rows.push(['연동 시스템 관측 시각(observedAt)', timeText(observation.observedAt)]);
+    rows.push(['실제 효과(effectApplied)', `effectApplied: ${raw(String(observation.effectApplied))}`]);
+  }
+  if (rows.length > 0) {
+    const list = node('ul', null, 'action-list');
+    for (const [name, value] of rows) list.append(node('li', `${name}: ${value}`));
+    root.append(list);
+  }
+  if (safeReceipt && safeReceipt.superseded === true) root.append(node('p', '이전 조회는 최신 결과를 대신하지 않습니다(superseded).'));
+
+  // 사건과 요청에 묶인 정상 표시에만 붙인다. 진행 전·오류·결과 불명 표시에는 붙이지 않는다.
+  const bound = ['prepared', 'executing', 'pending', 'denied', 'failed', 'expired'].includes(code) || confirmed;
+  if (bound && eventId && safeReceipt && typeof safeReceipt.requestId === 'string' && safeReceipt.requestId) {
+    root.dataset.studentActionEvent = eventId;
+    root.dataset.studentActionRequest = safeReceipt.requestId;
+  }
+  return root;
+}
+
 export function createStudentView() {
   return {
     renderIdentity,
@@ -676,6 +774,6 @@ export function createStudentView() {
     renderVulnerabilities() { return '학생 구현 대기: 정확한 설치 버전·OSV 출처·조회 시각·부분 결과·조회 실패를 구분하세요.'; },
     renderAiConnection,
     renderExplanation,
-    renderAction() { return '학생 구현 대기: 현재 사건·조치·실제 대상·사람 확인·ACK와 원천 효과·unknown을 구분하세요.'; },
+    renderAction,
   };
 }

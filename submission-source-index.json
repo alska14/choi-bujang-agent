@@ -1,15 +1,16 @@
 {
-  "stage": 18,
-  "criteria": ["evidence_binding", "unknown_evidence", "insufficient_evidence", "wrong_event_rejected", "proposal_not_executed", "non_ai_regression", "explanation_refresh"],
+  "stage": 19,
+  "criteria": ["proposal_execution_separation", "human_confirmation", "current_intent_binding", "observed_server_result", "duplicate_prevention", "unknown_not_success", "action_refresh"],
   "sourceFiles": [
-    { "path": "on-client/student/extension.mjs", "gitBlob": "366ff3c94de747e01a3eaed5ccf696a199b67eae" },
+    { "path": "on-client/student/extension.mjs", "gitBlob": "c42c01425f68a5f42675eb730dfd454f41632416" },
     { "path": "on-client/public/app.js", "gitBlob": "002bfdf421f0005c14bb98dcbf3d0163f4be091d" },
     { "path": "on-client/src/server.mjs", "gitBlob": "42774051fa29614e28f4f823db41fe33942166ed" },
-    { "path": "on-client/src/ai/service.mjs", "gitBlob": "4a78e9303b54dcf73d11172d2abe1fab5b274456" }
+    { "path": "on-client/src/actions/service.mjs", "gitBlob": "3cebdf1c4f80db6872221e0d7f9afaf99cbc13ab" },
+    { "path": "on-client/src/actions/store.mjs", "gitBlob": "d91ecef6bc0dddbee6a8841367f7cb7be05d67b6" }
   ],
   "callPath": [
-    "on-client/public/app.js (snapshot kind explanation -> renderExplanation)",
-    "on-client/student/extension.mjs (renderExplanation)"
+    "on-client/public/app.js (actionState -> studentData action -> renderAction)",
+    "on-client/student/extension.mjs (renderAction)"
   ],
   "runtimeVerification": "not_performed"
 }
