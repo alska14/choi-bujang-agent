@@ -1,34 +1,15 @@
 {
-  "stage": 17,
-  "criterion": "ai_model_called",
+  "stage": 18,
+  "criteria": ["evidence_binding", "unknown_evidence", "insufficient_evidence", "wrong_event_rejected", "proposal_not_executed", "non_ai_regression", "explanation_refresh"],
   "sourceFiles": [
-    {
-      "path": "on-client/student/extension.mjs",
-      "gitBlob": "01e89cab2b15d11f1335feb88dc8cee290e453e6"
-    },
-    {
-      "path": "on-client/public/app.js",
-      "gitBlob": "002bfdf421f0005c14bb98dcbf3d0163f4be091d"
-    },
-    {
-      "path": "on-client/src/server.mjs",
-      "gitBlob": "42774051fa29614e28f4f823db41fe33942166ed"
-    },
-    {
-      "path": "on-client/src/ai/service.mjs",
-      "gitBlob": "4a78e9303b54dcf73d11172d2abe1fab5b274456"
-    },
-    {
-      "path": "on-client/vendor/clco-http.mjs",
-      "gitBlob": "aef2a78d36257ef996df8cd9721384519c477fc9"
-    }
+    { "path": "on-client/student/extension.mjs", "gitBlob": "366ff3c94de747e01a3eaed5ccf696a199b67eae" },
+    { "path": "on-client/public/app.js", "gitBlob": "002bfdf421f0005c14bb98dcbf3d0163f4be091d" },
+    { "path": "on-client/src/server.mjs", "gitBlob": "42774051fa29614e28f4f823db41fe33942166ed" },
+    { "path": "on-client/src/ai/service.mjs", "gitBlob": "4a78e9303b54dcf73d11172d2abe1fab5b274456" }
   ],
   "callPath": [
-    "on-client/public/app.js",
-    "POST /api/ai/explain",
-    "on-client/src/server.mjs",
-    "on-client/src/ai/service.mjs",
-    "on-client/vendor/clco-http.mjs"
+    "on-client/public/app.js (snapshot kind explanation -> renderExplanation)",
+    "on-client/student/extension.mjs (renderExplanation)"
   ],
   "runtimeVerification": "not_performed"
 }
