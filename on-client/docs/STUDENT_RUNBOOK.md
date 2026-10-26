@@ -32,7 +32,7 @@
 
 ## 3. 폴더 구조
 
-Git 최상위 폴더는 `choi-bujang-agent`이고 앱 폴더는 그 안의 `on-client`입니다. 이 PC 기준 경로는 `C:\Users\user\Desktop\aleph 과제\choi-bujang-agent\on-client`입니다. [PC 실행 확인]
+Git 최상위 폴더는 `choi-bujang-agent`이고 앱 폴더는 그 안의 `on-client`입니다. 저장소를 받은 위치는 어디든 상관없고, 문서에서는 그 폴더를 `<저장소 폴더>`로 씁니다. 코드와 설정에 PC 고유의 절대 경로를 쓰지 않습니다(`on-client` 안의 경로는 모두 실행 파일 위치 기준 상대 경로입니다). [코드 확인]
 
 ```text
 choi-bujang-agent\                  Git 최상위(.gitignore: .env, .env.*, node_modules/)
@@ -66,7 +66,7 @@ choi-bujang-agent\                  Git 최상위(.gitignore: .env, .env.*, node
 1. 새 PowerShell 창을 엽니다. 기존 작업 창은 닫지 않아도 됩니다.
 2. 앱 폴더로 이동합니다. 경로에 공백과 한글이 있으므로 따옴표로 감쌉니다.
 
-    cd "C:\Users\user\Desktop\aleph 과제\choi-bujang-agent\on-client"
+    cd "<저장소 폴더>\on-client"
 
 3. 실행합니다.
 
