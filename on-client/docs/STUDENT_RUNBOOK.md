@@ -1,0 +1,254 @@
+# 학생용 실행 설명서와 시스템 구성도 (Djoković 보안 Agent)
+
+이 문서는 학생(저장소 소유자)이 `on-client` 폴더를 직접 실행하고 확인하며 쓴 설명서입니다. 제공된 `README.md`는 그대로 두었고, 이 문서는 그 옆에 추가한 학생 문서입니다.
+
+## 0. 문서 읽는 법: 확인 구분
+
+각 항목 끝의 표시는 실제로 무엇을 했는지를 뜻합니다. 표시가 없는 문장은 코드를 읽고 쓴 설명입니다.
+
+| 표시 | 뜻 |
+|---|---|
+| [코드 확인] | 파일을 읽고 확인했습니다. 실행하지 않았습니다. |
+| [모의 점검] | 가짜 DOM과 모의 입력으로 학생 함수를 호출해 확인했습니다. 실제 화면이 아닙니다. |
+| [PC 실행 확인] | 2026-10-26에 이 PC에서 직접 실행하고 결과를 관찰했습니다. |
+| [미확인] | 실행하지 않았거나 환경이 없어 확인하지 못했습니다. 동작한다고 쓰지 않습니다. |
+
+## 1. 목적과 기능
+
+회사 직원이 자기 로그인 상태, 업무 앱 접속 판정, 최근 접속 기록과 보안 경보를 보는 로컬 웹 앱입니다. 화면 8곳은 제가 `student/extension.mjs`에 구현한 함수가 그립니다. 나머지(서버, HTML, 연결 절차)는 시작 틀이 제공한 코드입니다.
+
+## 2. 필요한 프로그램과 확인한 버전
+
+| 프로그램 | 이 PC에서 확인한 버전 | 요구·허용 범위 |
+|---|---|---|
+| Windows | Windows 11 Pro 10.0.26100 | `tools\start-alekov.ps1`이 Windows 경로 검사를 포함하므로 Windows 기준입니다. |
+| Node.js | v24.21.0 [PC 실행 확인] | `package.json`의 `engines`는 24.19.0입니다. 실행 도구는 22~24를 허용하고 24.19.0이 아니면 "수업 기준은 v24.19.0" 참고 문구를 냅니다. 21 이하나 25 이상은 거부합니다. [코드 확인] |
+| npm | 11.19.0 [PC 실행 확인] | 외부 npm 의존성이 없어 `npm install`은 필요 없습니다. `package.json`에 `dependencies`가 없습니다. [코드 확인] |
+| Git | 2.55.0.windows.3 [PC 실행 확인] | 커밋과 제출에만 씁니다. 앱 실행에는 필요 없습니다. |
+| Windows PowerShell | 5.1.26100.9711 [PC 실행 확인] | 실행 도구는 Windows PowerShell에서 `-File`로 실행합니다. PowerShell 7은 쓰지 않았습니다. [미확인] |
+| 브라우저 | PC의 Chromium 계열 브라우저. 버전은 기록하지 않았습니다. | 지원 브라우저 목록은 확인하지 않았습니다. [미확인] |
+
+지원하지 않거나 확인하지 않은 환경: macOS, Linux, Node.js 21 이하·25 이상(실행 도구가 거부), PowerShell 7. 이 환경들은 실행해 보지 않았으므로 동작한다고 쓰지 않습니다.
+
+## 3. 폴더 구조
+
+Git 최상위 폴더는 `choi-bujang-agent`이고 앱 폴더는 그 안의 `on-client`입니다. 이 PC 기준 경로는 `C:\Users\user\Desktop\aleph 과제\choi-bujang-agent\on-client`입니다. [PC 실행 확인]
+
+```text
+choi-bujang-agent\                  Git 최상위(.gitignore: .env, .env.*, node_modules/)
+└─ on-client\                       앱 폴더(여기서 실행)
+   ├─ package.json                  scripts: start, demo, check
+   ├─ .env.example                  비밀 없는 설정 견본
+   ├─ README.md                     제공 README(수정하지 않고 끝에 학생 문서 안내만 추가)
+   ├─ docs\STUDENT_RUNBOOK.md       이 문서
+   ├─ tools\start-alekov.ps1        실행 도구(제공)
+   ├─ src\server.mjs                로컬 앱 서버(제공)
+   ├─ src\engine.mjs                엔진 어댑터 로더·예제 엔진(제공)
+   ├─ src\ai\ , src\connection\     AI 연결·계정 연결(제공)
+   ├─ src\actions\                  조치 준비·결과 서비스(제공)
+   ├─ src\vulnerabilities\          설치 패키지·OSV 조회(제공)
+   ├─ src\engine\                   SDP 호스트 연결(제공)
+   ├─ public\                       index.html, app.js, style.css, vulnerabilities-view.mjs, assets(제공)
+   ├─ vendor\clco-http.mjs          AI 게이트웨이 HTTP 클라이언트(제공)
+   └─ student\
+      ├─ extension.mjs              학생 구현(이 프로젝트에서 제가 작성)
+      └─ engine-adapter.mjs         시작 틀 그대로(수정하지 않음)
+```
+
+위 구조는 실행용 전체본인 `step-21` 브랜치 기준입니다. 제출용 `submit-21` 브랜치에는 이 문서가 근거로 쓰는 파일(서버, 실행 도구, 설정 견본, 학생 코드, 화면 파일)만 남겼고 나머지 제공 파일은 `step-21`에서 볼 수 있습니다.
+
+구조는 `find`로 폴더를 직접 나열해 확인했습니다. [PC 실행 확인] `README.md`가 언급하는 `docs\STUDENT_LAUNCH_GUIDE.md`, `docs\STUDENT_PROMPTS.md` 같은 시작 틀 문서는 이 저장소에 들어 있지 않습니다. `on-client\docs` 폴더에는 이 문서만 있습니다. [PC 실행 확인] 그 문서들을 읽고 따라 했다고 쓰지 않습니다.
+
+## 4. 실행 절차
+
+### 4-1. 실행
+
+1. 새 PowerShell 창을 엽니다. 기존 작업 창은 닫지 않아도 됩니다.
+2. 앱 폴더로 이동합니다. 경로에 공백과 한글이 있으므로 따옴표로 감쌉니다.
+
+    cd "C:\Users\user\Desktop\aleph 과제\choi-bujang-agent\on-client"
+
+3. 실행합니다.
+
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start-alekov.ps1
+
+    다른 방법: `npm start`는 `node src/server.mjs`와 같은 서버를 켭니다. [코드 확인] 예제 자료로만 화면을 보려면 `npm run demo`(`node src/server.mjs --demo`)입니다. 예제 모드는 실제 연결이 아닙니다. 두 방법 모두 `npm` 명령 자체는 실행해 보지 않았습니다. [미확인] `npm start`가 켜는 것과 같은 `node src/server.mjs`는 직접 실행해 확인했습니다. [PC 실행 확인]
+
+    실행 도구 옵션: `-Port 5190`(포트 변경), `-Background`(뒤에서 실행), `-Demo`(예제 모드). `-NativeHostConfig`, `-SdpHostConfig`는 담당자가 설정 파일을 줄 때만 씁니다. [코드 확인] `-Demo`와 `-SdpHostConfig`는 함께 쓸 수 없습니다. [코드 확인]
+
+4. 브라우저에서 `http://127.0.0.1:5189`를 엽니다. 서버는 `127.0.0.1`에만 열리고, 요청의 Host가 `127.0.0.1:5189` 또는 `localhost:5189`가 아니면 거부합니다(`HOST_REJECTED`, 403). [코드 확인]
+
+### 4-2. 정상 시작 신호
+
+| 신호 | 확인 구분 |
+|---|---|
+| 서버 콘솔에 `케셰브 연결 확인: http://127.0.0.1:5189` 한 줄이 출력됨(예제 모드는 `케셰브 예제: ...`) | [PC 실행 확인] `node src/server.mjs`를 직접 실행해 이 한 줄을 관찰했습니다. |
+| 실행 도구가 서버의 `/` 응답이 200일 때까지 최대 20초 기다린 뒤 "케셰브가 켜졌습니다. 브라우저에서 ... 을 여세요."를 출력함 | [코드 확인] 출력 문구는 직접 보지 못했습니다. 실행 도구를 `-Background`로 실행해 서버 프로세스가 켜지고 `GET /`가 200(17136바이트)을 준 것만 관찰했습니다. [PC 실행 확인] |
+| 브라우저 제목이 `케셰브 · ZTNA & XDR`, 화면에 `연결 없음` 표시 | [PC 실행 확인] |
+
+이 신호는 서버가 응답한다는 뜻일 뿐 AI 연결 성공이나 실제 회사 시스템 연결을 뜻하지 않습니다. 실행 도구도 같은 문구를 출력합니다. [코드 확인]
+
+### 4-3. 종료와 재실행
+
+- 종료: 일반 실행은 그 창에서 `Ctrl+C`를 누릅니다. `-Background`로 실행했다면 출력된 프로세스 번호의 `node`를 작업 관리자나 `Stop-Process -Id 번호`로 종료합니다. 종료 뒤 5189 포트를 쓰는 프로세스가 없는 것을 확인했습니다. [PC 실행 확인] `Ctrl+C` 종료는 직접 눌러 확인하지 않았습니다. [미확인]
+- 재실행: 같은 명령을 다시 실행합니다. 5189가 사용 중이면 실행 도구가 다른 프로그램을 끄지 않고 "다른 번호로 실행해 주세요"라고 안내하므로 `-Port 5190`을 붙입니다. [코드 확인] 이때 브라우저 주소도 `http://127.0.0.1:5190`으로 바꿉니다.
+- `student/extension.mjs`만 고쳤다면 서버를 다시 켜지 않고 브라우저를 새로 고칩니다. 서버가 이 파일을 요청마다 디스크에서 읽고 `cache-control: no-store`로 보냅니다. [코드 확인] 수정 후 반영은 직접 해 보지 않았습니다. [미확인] `src/` 아래 서버 코드를 고쳤다면 서버를 다시 켭니다.
+- 문법 검사: `npm run check`는 `node --check student/extension.mjs`만 실행하며 종료 코드 0을 확인했습니다. [PC 실행 확인] 동작 검사가 아닙니다.
+
+### 4-4. 설정
+
+`.env.example`은 비밀 없는 견본입니다. 서버에는 `.env` 파일을 자동으로 읽는 코드가 없습니다(`dotenv`와 `.env` 읽기 코드를 `src`, `tools`에서 검색해 없음을 확인). [코드 확인] 값을 쓰려면 PowerShell 세션의 환경 변수로 지정합니다. 실행 도구는 `TOKEN`, `SECRET`, `PASSWORD`, `API_KEY`, `ON_AI_`로 시작하는 이름 등 비밀로 보이는 환경 변수를 서버에 넘기지 않습니다. [코드 확인]
+
+| 이름 | 견본 값 | 설명 |
+|---|---|---|
+| `ON_PORT` | `5189` | 서버 포트. 실행 도구의 `-Port`가 이 값을 설정합니다. |
+| `ON_ENGINE_ADAPTER` | `./student/engine-adapter.mjs` | 엔진 어댑터 경로. 비어 있으면 연결 없음 상태입니다. |
+| `ON_AI_MODEL` | `aleph/auto` | AI 모델. 원격 앱 정책의 허용 목록 확인이 필요합니다. |
+| `ON_PROJECT_DIRECTORY` | (빈 값) | 설치 패키지 조회 대상 프로젝트 절대 경로. 운영자가 준비합니다. |
+| `ON_APPROVED_PUBLIC_PACKAGES` | `[]` | 공개 조회를 승인한 npm 패키지 목록(JSON). 비어 있으면 OSV로 외부 조회하지 않습니다. |
+
+열쇠, 토큰, 비밀번호는 코드, 커밋, 이 문서에 쓰지 않습니다. `.gitignore`가 `.env`와 `.env.*`를 제외하고 `.env.example`만 포함합니다. [코드 확인]
+
+## 5. 시스템 구성도
+
+### 5-1. Mermaid
+
+```mermaid
+flowchart LR
+  B["브라우저<br/>http://127.0.0.1:5189<br/>public/index.html · public/app.js<br/>student/extension.mjs (학생 화면 함수)"]
+  S["로컬 앱 서버<br/>on-client/src/server.mjs<br/>127.0.0.1:5189"]
+  E["엔진 어댑터<br/>src/engine.mjs · student/engine-adapter.mjs<br/>기본: 연결 없음(disconnected)"]
+  X["접근 제어·XDR 시스템<br/>SDP 호스트(src/engine/sdp-host.mjs)<br/>담당자 설정 파일이 있을 때만"]
+  G["AI 게이트웨이<br/>https://ai-classroom-gateway-production.up.railway.app"]
+  P["ALEPH 포털 승인 화면<br/>https://aleph-omega.vercel.app/workbench.html"]
+  O["OSV<br/>https://api.osv.dev/v1/querybatch<br/>승인된 공개 패키지가 있을 때만"]
+  B -->|"GET/POST /api/*"| S
+  S -->|"readIdentity · readApps · readEvents · decideAccess"| E
+  E -.->|"연결된 경우만"| X
+  S -->|"AI 연결 점검 · 사건 설명"| G
+  B -.->|"승인 페이지 열기 (사용자가 직접)"| P
+  S -->|"설치 패키지 조회"| O
+```
+
+### 5-2. 같은 내용을 글로 쓴 구성도
+
+    [브라우저] --HTTP(127.0.0.1:5189)--> [로컬 앱 서버 src/server.mjs]
+    [로컬 앱 서버] --> [엔진 어댑터] --(연결된 경우만)--> [접근 제어·XDR 시스템(SDP 호스트)]
+    [로컬 앱 서버] --HTTPS--> [AI 게이트웨이]        (AI 연결 점검, 사건 설명)
+    [로컬 앱 서버] --HTTPS--> [OSV querybatch]        (승인된 공개 패키지가 있을 때만)
+    [브라우저] --(사용자가 직접 여는 링크)--> [ALEPH 포털 승인 화면]
+    학생 화면 함수는 브라우저 안에서 /student/extension.mjs를 읽어 8개 칸을 그림
+
+### 5-3. 관계 표
+
+| 출발 | 도착 | 경로·주소 | 내용 | 확인 구분 |
+|---|---|---|---|---|
+| 브라우저 | 로컬 앱 서버 | `GET /api/me`, `/api/apps`, `/api/events`, `/api/devices`, `/api/sessions` | 본인 신원·앱·기록·기기·세션 조회 | [코드 확인] 기본 실행에서 `/api/me`, `/api/events`는 503 `ENGINE_NOT_CONNECTED`를 관찰 [PC 실행 확인] |
+| 브라우저 | 로컬 앱 서버 | `POST /api/access` | 업무 앱 접근 판정 요청 | [코드 확인] |
+| 브라우저 | 로컬 앱 서버 | `GET /api/vulnerabilities`, `GET /api/diagnostics` | 설치 패키지 조회, 도움정보 | 둘 다 200 관찰 [PC 실행 확인] |
+| 브라우저 | 로컬 앱 서버 | `POST /api/ai/connect/{start,finish,status,cancel}`, `POST /api/ai/check`, `POST /api/ai/explain` | AI 연결 절차, 점검, 사건 설명 | [코드 확인] [미확인] 실제 호출하지 않았습니다. |
+| 브라우저 | 로컬 앱 서버 | `POST /api/native-login/{start,status,redeem,current,cancel}` | 계정 연결 확인 | [코드 확인] 호스트 연결이 없으면 `NATIVE_HOST_DISABLED`(503)로 응답하는 코드가 있습니다. |
+| 브라우저 | 로컬 앱 서버 | `POST /api/learner-support`, `POST /api/learner-support/gpt` | 제공된 학습 지원(문제 해결 안내) 기능. 학생 구현 범위가 아닙니다. | [코드 확인] [미확인] 호출하지 않았습니다. |
+| 브라우저 | 로컬 앱 서버 | `POST /api/actions/{prepare,execute,result}` | 조치 준비·집행·결과 재조회 | [코드 확인] [미확인] 호출하지 않았습니다. |
+| 로컬 앱 서버 | AI 게이트웨이 | `https://ai-classroom-gateway-production.up.railway.app` (`src/ai/connection.mjs`) | 모델 목록 점검, 사건 설명 | [코드 확인] [미확인] |
+| 로컬 앱 서버 | OSV | `https://api.osv.dev/v1/querybatch` (`src/vulnerabilities/osv.mjs`) | 정확한 설치 버전의 취약점 ID 조회 | [코드 확인] 승인 목록이 비어 있어 외부 조회가 일어나지 않는 상태만 확인했습니다. [PC 실행 확인] |
+
+### 5-4. 경계와 보호 장치
+
+모두 `src/server.mjs`에서 확인했습니다. [코드 확인]
+
+- 서버는 `127.0.0.1`에만 바인딩합니다.
+- Host가 `127.0.0.1:포트` 또는 `localhost:포트`가 아니면 403 `HOST_REJECTED`입니다.
+- 쿼리 문자열이 있는 요청은 400 `QUERY_REJECTED`입니다.
+- `POST`는 `Origin`이 같은 주소가 아니면 403 `ORIGIN_REJECTED`입니다.
+- 정적 파일 응답에는 `content-security-policy`(`default-src 'self'`)가 붙습니다.
+- 브라우저가 엔진 모듈 경로를 고를 수 없습니다. 어댑터 경로는 서버 실행자의 설정입니다.
+
+## 6. 구현한 함수와 제공 코드 경계
+
+### 6-1. 학생이 구현한 함수 (`student/extension.mjs`)
+
+| 함수 | 단계 | 화면 칸 | 하는 일 |
+|---|---|---|---|
+| `renderIdentity` | 13 | `student-identity` | 사용자·기기·세션 상태. 알 수 없는 값은 확인 불가로 표시하고 서버의 원래 상태 코드를 함께 적습니다. |
+| `renderDecision` | 14 | `student-decision` | 접근 판정(`allow`, `deny`, `challenge`, `unknown`)과 이유. 요청 실패를 접근 거부로 쓰지 않습니다. |
+| `renderEvents` | 15 | `student-events` | 접속·XDR 기록 목록, 종류·앱·접속 상태 필터, 상세. 새 자료가 오면 필터와 선택을 지웁니다. |
+| `renderStatus` | 16 | `student-status` | 기기·세션·알림·진단 정보와 빈 상태·오류 구분. 도움정보 복사 버튼은 사용자가 누를 때만 복사합니다. |
+| `renderAiConnection` | 17 | `student-ai-connection` | AI 연결 점검의 `idle`/`loading`/`ok`/`error`와 오류 원인 분류. 연결 점검 성공을 사건 설명 성공으로 쓰지 않습니다. |
+| `renderExplanation` | 17~18 | `student-explanation` | AI 요약을 근거 ID·근거 글·규칙·확인 불가 상태·제안과 함께 표시. 근거 ID가 사건과 맞지 않으면 내용을 표시하지 않습니다. |
+| `renderAction` | 19 | `student-action` | 제안·서버 접수(ACK)·효과 관측을 구분. `succeeded`는 `effectApplied === true`일 때만 효과 확인으로 씁니다. |
+| `renderVulnerabilities` | 20 | `student-vulnerabilities` | 정확한 설치 버전과 OSV 결과, 미조회·일부 실패 구분. 범위(`^1.2.0`)는 설치 버전으로 표시하지 않습니다. |
+
+`createStudentView()`가 위 함수를 묶어 내보냅니다. 시작 틀 시점(`d2fa991`) 대비 변경된 파일은 `on-client/student/extension.mjs` 하나였습니다(`git diff --name-only d2fa991 HEAD`). 이 문서와 README 추가분은 21단계에서 더했습니다. [PC 실행 확인]
+
+### 6-2. 제공 코드 (수정하지 않음)
+
+| 영역 | 파일 | 역할 |
+|---|---|---|
+| 서버 | `src/server.mjs`, `src/engine.mjs`, `src/engine/*` | 라우팅, 요청 검증, 엔진 어댑터 로더, SDP 호스트 연결 |
+| AI | `src/ai/*`, `src/connection/*`, `vendor/clco-http.mjs` | 계정·AI 연결, 점검, 사건 설명 호출 |
+| 조치 | `src/actions/*` | 조치 준비·집행·결과 재조회 서비스 |
+| 취약점 | `src/vulnerabilities/*`, `public/vulnerabilities-view.mjs` | lock 파일 선별, OSV 조회, 제공 표 |
+| 화면 | `public/index.html`, `public/app.js`, `public/style.css` | 제공 화면과 학생 함수 호출·상태 관리 |
+| 실행 | `tools/start-alekov.ps1`, `tools/*.ps1` | 실행 도구 |
+| 어댑터 틀 | `student/engine-adapter.mjs` | 연결 어댑터 틀. 수정하지 않아 기본 상태는 `disconnected`입니다. |
+
+## 7. 화면 버튼 이름 (실제 `public/index.html` 기준)
+
+2026-10-26에 서버를 켜고 화면의 버튼 문구를 직접 읽어 대조했습니다. [PC 실행 확인]
+
+| 위치 | 버튼 |
+|---|---|
+| 상단 | 다시 불러오기, 보호 현황, 업무 앱, 보안 기록 |
+| 도움정보 | 도움정보 불러오기, 확인했으며 복사합니다 |
+| 계정 연결 확인 | 계정 연결 시작, 로그인 확인 완료, 현재 로그인 확인, 계정 연결 취소 |
+| AI 연결 | AI 연결 시작, 승인했으며 연결 확인, 상태 다시 확인, 연결 취소, 현재 API 연결 점검(처음엔 숨김), 연결 도움정보 보기 |
+| AI 연결 점검 | AI 연결 점검, AI 연결 점검 취소 |
+| 설치 패키지 | 설치 패키지 조회, 패키지 조회 취소 |
+| 사건 설명 | AI 설명 취소 |
+| 조치 | 대상과 조치를 확인했으며 집행합니다, 원천 결과만 재조회, 조치 화면 취소 |
+
+주의: 단계별 공식 안내 문장에는 「시작」「연결 확인」「연동 시스템 결과만 재조회」처럼 위 실제 화면과 다른 이름이 있습니다. 이 문서는 실제 화면의 이름을 씁니다. 19단계 `renderAction`의 재조회 안내 문구가 「연동 시스템 결과만 재조회」를 가리키는데 실제 버튼 이름은 「원천 결과만 재조회」입니다. 코드는 아직 고치지 않았습니다. 「조치 준비」 버튼은 AI 제안과 지원 조치가 있을 때만 생기며 지금은 보이지 않습니다. 이 버튼은 현재 화면에서 볼 수 없어 확인하지 못했습니다. [미확인]
+
+## 8. 확인한 기능과 미확인 기능
+
+| 기능 | 결과 | 확인 구분 |
+|---|---|---|
+| `npm run check`(학생 파일 문법) | 종료 코드 0 | [PC 실행 확인] |
+| 서버 기동(`node src/server.mjs`) | 시작 신호 한 줄 출력, `GET /` 200 | [PC 실행 확인] |
+| 실행 도구 `-Background` 기동 | 서버 프로세스 기동, `GET /` 200, 종료 후 포트 해제 | [PC 실행 확인] (도구가 출력한 안내 문구는 직접 보지 못함) |
+| 연결 없음 기본 모드의 화면 | 학생 칸 8개가 의도한 문구를 표시: 사용자·기록은 연결 실패 문구, AI 연결은 "AI 연결 점검 전", 설명은 "보안 기록에서 기록을 먼저 고르세요", 조치는 "아직 미실행(idle)", 패키지는 "조회 전" | [PC 실행 확인] |
+| 브라우저 콘솔 | 503 응답 오류 5건(연결 어댑터가 없어 정상). 다른 오류는 보지 못함 | [PC 실행 확인] |
+| 설치 패키지 조회 버튼 | 200, 제공 표와 학생 칸 모두 `not_configured`(조회 준비 미완료), 패키지 0행, "취약점 없음이 아닙니다" 문구 | [PC 실행 확인] |
+| 18~20단계 학생 함수의 상태별 표시 | 상태별 모의 입력 22개(18단계), 23개(19단계), 26개(20단계) 통과 | [모의 점검] 실제 화면이 아닙니다. |
+| 13~17단계 학생 함수의 모의 입력 점검 | 이번 문서 작성에서 다시 하지 않았습니다. | [미확인] |
+| 실제 회사 시스템(SDP) 연결, 계정 연결 확인 | 호스트 설정이 없어 시도하지 않았습니다. | [미확인] |
+| AI 연결 점검·사건 설명 실제 호출 | 유료 요청이 될 수 있어 누르지 않았습니다. | [미확인] |
+| 조치 준비·집행·결과 재조회 | 지원 조치가 없어 경로가 열리지 않습니다. 실제 학생 계정의 조치 처리 결과는 기다림(UNV)입니다. | [미확인] |
+| OSV 실제 조회(`complete`, `partial`) | 허용 패키지 목록이 비어 있어 외부 조회가 일어나지 않았습니다. | [미확인] |
+| 예제 모드(`npm run demo`, `-Demo`) | 실행하지 않았습니다. | [미확인] |
+| 다른 PC·다른 계정에서의 재현 | 하지 않았습니다. | [미확인] |
+| 서버 AI 판정 결과 | 이 문서는 판정 결과를 기록하지 않습니다. | [미확인] |
+
+## 9. 오류별 확인 순서
+
+| 증상 | 확인 순서 | 근거 |
+|---|---|---|
+| "앱 폴더가 아닙니다" 또는 "바로가기(링크)로 연결된 폴더...에서는 실행하지 않습니다" | 1) PowerShell의 현재 폴더가 `on-client`인지 확인 2) `tools\start-alekov.ps1`, `src\server.mjs`, `package.json` 존재 확인 3) 링크로 연결한 폴더가 아닌 실제 폴더에서 실행 | [코드 확인] |
+| "Node.js 가 없습니다" / "Node.js 22~24 에서 실행합니다" | 새 PowerShell 창에서 `node --version` 실행. 22~24가 아니면 Node.js 24.19.0 설치 후 새 창에서 재실행 | [코드 확인] |
+| "포트 5189 를 다른 프로그램이 쓰고 있습니다" | 다른 프로그램은 끄지 말고 `-Port 5190`으로 실행하고 브라우저 주소의 포트도 바꿈 | [코드 확인] |
+| "앱 서버가 20 초 안에 뜨지 않았습니다" | 같은 창의 메시지 확인 → `node src/server.mjs`를 직접 실행해 오류 문구 확인 → 담당 강사에게 메시지 전달 | [코드 확인] 직접 실행 확인 방법은 실행 도구가 같은 `server.mjs`를 켜는 구조라서 쓴 순서입니다. |
+| 브라우저에서 403 `HOST_REJECTED` | 주소를 `http://127.0.0.1:5189` 또는 `http://localhost:5189`로 입력(다른 IP·호스트 이름 불가) | [코드 확인] |
+| 화면에 "연결 없음", 콘솔에 503 오류, `ENGINE_NOT_CONNECTED` | 기본 실행의 정상 상태입니다. 서버 로그나 코드 오류가 아닙니다. 실제 연결은 담당자가 설정 파일을 줄 때 `-SdpHostConfig`로 지정합니다. | [PC 실행 확인] 연결 후 동작은 [미확인] |
+| 설치 패키지 조회가 `not_configured` / `not_checked` | `ON_PROJECT_DIRECTORY`(대상 프로젝트)와 `ON_APPROVED_PUBLIC_PACKAGES`(허용 패키지)는 운영자가 준비합니다. 학생이 임의로 바꾸거나 의존성을 낮추지 않습니다. | [PC 실행 확인] `not_configured` |
+| AI 연결 점검 실패 | 화면의 오류 코드로 원인을 나눕니다: 권한 준비 중(담당자에게 계정 연결·앱 권한 확인), 인증 실패·접근 제한(계정 연결 다시 확인), 한도(담당자 확인), 이용 시간 아님(시간 확인), 요청 제한·시간 초과·네트워크(잠시 뒤 직접 다시 점검), 취소(이전 결과는 현재 결과가 아님), 모델 없음(담당자에게 모델 허용 설정 확인). 자동으로 다시 점검하지 않습니다. | `renderAiConnection`의 오류 분류 [코드 확인] [모의 점검] |
+| 사건 설명이 "근거가 맞지 않음" | AI 설명이 인용한 근거 ID가 선택한 사건의 근거 목록에 없는 경우입니다. 내용을 표시하지 않는 것이 정상입니다. 다른 사건을 고르거나 다시 요청합니다. | `renderExplanation` [모의 점검] |
+| 조치 준비 버튼이 보이지 않음 | 사건의 `supportedActions`가 비어 있으면 정상입니다. | [코드 확인] [모의 점검] |
+| `student/extension.mjs`를 고친 뒤 화면이 비어 있음 | `npm run check`로 문법 확인 → 브라우저 새로 고침 → 콘솔 오류 확인 | [PC 실행 확인] 문법 검사만 |
+
+## 10. 지원하지 않는 것과 확인하지 않은 것
+
+- 이 앱의 AI 설명과 제안은 참고 정보이며 보안 조치를 실행하지 않습니다.
+- OSV는 알려진 취약점 데이터베이스입니다. 조회 결과가 없다는 사실만으로 패키지나 앱 전체가 안전하다고 보장하지 않습니다.
+- 서버가 이 문서의 명령을 실행해 확인하지 않습니다. 실행 결과는 2026-10-26에 제가 이 PC에서 한 것만 [PC 실행 확인]으로 표시했습니다.
+- 실제 SDP 연결, AI 호출, 조치 집행, 다른 환경에서의 재현은 확인하지 못했습니다.
