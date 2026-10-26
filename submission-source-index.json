@@ -1,17 +1,22 @@
 {
-  "stage": 20,
-  "criteria": ["exact_lock_version", "osv_match", "lookup_unavailable", "no_results_distinction", "partial_preservation", "refresh_replaces", "request_recovery", "stale_response_blocked"],
+  "stage": 21,
+  "documentFiles": [
+    { "path": "on-client/README.md", "gitBlob": "949d425c7e9c49a6fc1513e992a23777a7c90822" },
+    { "path": "on-client/docs/STUDENT_RUNBOOK.md", "gitBlob": "5a8b43fe3dab49c32187d4191e5bdc928c994fca" }
+  ],
+  "runAndConfigFiles": [
+    { "path": "on-client/package.json", "gitBlob": "1a4bd0c7c9f4e2ae335bea28f28926ac015f225f" },
+    { "path": "on-client/.env.example", "gitBlob": "8eeef89c28b975fe8a4aa7b793b1137ada0ba31c" },
+    { "path": "on-client/tools/start-alekov.ps1", "gitBlob": "809bccc4cbc9a5fc2f89f1a20e276d7c0c265f30" }
+  ],
   "sourceFiles": [
     { "path": "on-client/student/extension.mjs", "gitBlob": "b23c5de4fb423af247aa7aa9f353be14b885b5fe" },
-    { "path": "on-client/public/app.js", "gitBlob": "002bfdf421f0005c14bb98dcbf3d0163f4be091d" },
-    { "path": "on-client/public/vulnerabilities-view.mjs", "gitBlob": "31adffd9701df776ded8bbbf866e7f22aae160e9" },
+    { "path": "on-client/student/engine-adapter.mjs", "gitBlob": "4b1f88460e223825285337aa1bab06378cc0767f" },
     { "path": "on-client/src/server.mjs", "gitBlob": "42774051fa29614e28f4f823db41fe33942166ed" },
-    { "path": "on-client/src/vulnerabilities/project-scan.mjs", "gitBlob": "5a6725a8de1f693f978fbc08bc3757f7a74dab91" },
-    { "path": "on-client/src/vulnerabilities/osv.mjs", "gitBlob": "c7753ca36ab66ed7cfcc77eba473a81763ea44fd" }
+    { "path": "on-client/src/engine.mjs", "gitBlob": "6ceb3560da2ecd3cd4b29789204b4432f6073c69" },
+    { "path": "on-client/src/ai/connection.mjs", "gitBlob": "316a1abb222417b720f7b8c62d8b8fce66f18a68" },
+    { "path": "on-client/public/index.html", "gitBlob": "f079f53c87e4f52e055b7318fb82d10407352c5c" },
+    { "path": "on-client/public/app.js", "gitBlob": "002bfdf421f0005c14bb98dcbf3d0163f4be091d" }
   ],
-  "callPath": [
-    "on-client/public/app.js (GET /api/vulnerabilities -> normalizeScan -> studentData vulnerabilities -> renderVulnerabilities)",
-    "on-client/student/extension.mjs (renderVulnerabilities)"
-  ],
-  "runtimeVerification": "not_performed"
+  "runtimeVerification": "partial: local server start and page check performed on the author's PC; see on-client/docs/STUDENT_RUNBOOK.md section 8"
 }
