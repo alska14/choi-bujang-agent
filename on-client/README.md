@@ -31,4 +31,5 @@ npm start도 같은 서버를 켭니다. 기본 실행은 실제 회사 시스�
 - 학생용 실행 설명서와 시스템 구성도(실행 명령, 정상 시작 신호, 구성도, 구현 함수와 제공 코드 경계, 오류별 확인 순서, 미확인 기능): docs/STUDENT_RUNBOOK.md
 - 데이터 보존·백업·복원 계획과 제한: docs/DATA_RETENTION.md
 - 22단계 재현 기록(새 빈 폴더에서 같은 커밋을 받아 실행한 결과, 13~21단계별 기능·결과·미확인 원인, 버전 구분): docs/REPRODUCTION_RECORD.md. 이 프로젝트는 검증 중인 버전이며 v1.0이 아닙니다.
-- 위 "더 읽을 곳"에 적힌 docs/GETTING_STARTED_STUDENT.md 등 시작 틀 문서는 이 저장소에 포함돼 있지 않습니다. 이 저장소에서 확인한 학생 문서는 위 세 개(STUDENT_RUNBOOK.md, DATA_RETENTION.md, REPRODUCTION_RECORD.md)입니다.
+- 마지막 총공세(내 PC 상태, `/pc-status`): 처음 보는 사람용 빠른 실행 안내 docs/QUICK_START.md, 시연 순서와 되는 것·안 되는 것·근거 정리 docs/FINAL_REPORT.md. 실행은 `tools/start-final.ps1`입니다.
+- 위 "더 읽을 곳"에 적힌 docs/GETTING_STARTED_STUDENT.md 등 시작 틀 문서는 이 저장소에 포함돼 있지 않습니다. 이 저장소에서 확인한 학생 문서는 docs/STUDENT_RUNBOOK.md, DATA_RETENTION.md, REPRODUCTION_RECORD.md, QUICK_START.md, FINAL_REPORT.md 다섯 개입니다.
