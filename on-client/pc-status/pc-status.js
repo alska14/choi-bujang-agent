@@ -20,6 +20,8 @@ const ACTION_LABEL = { Block: '차단', Allow: '허용', NotConfigured: '지정 
 const DIRECTION = { up: '증가', down: '감소', same: '변화 없음' };
 
 const $ = (id) => document.getElementById(id);
+// 화면 코드가 불러와졌다면(서버로 연 경우) 파일을 직접 열었을 때 쓰는 안내는 지운다.
+$('open-hint')?.remove();
 const state = {
   auto: false, timer: null, busy: false, metric: 'cpu',
   fast: null, fastFailed: false, security: null, securityFailed: false,
