@@ -22,6 +22,7 @@ import { createIntel } from './soc/ti/engine.mjs';
 import { createEventLog } from './soc/event-log.mjs';
 import { createInventory } from './soc/inventory.mjs';
 import { createKisaAudit } from './soc/kisa-audit.mjs';
+import { createAgentHooks } from './soc/agent-hooks.mjs';
 
 const list = (value) => String(value ?? '').split(';').map((item) => item.trim()).filter(Boolean);
 
@@ -30,6 +31,7 @@ export function createFinalApp({ engine, scanner, sampler = createSampler(), his
   let socParts = null;
   let tiParts = null;
   let audit = null;
+  let agentHooks = null;
   if (soc) {
     const dataDir = join(env.LOCALAPPDATA || env.TEMP || '.', 'djokovic-soc');
     // 쿨다운은 60초 점검 주기보다 길어야 한다. 짧으면 계속 켜져 있는 설정(예: 자동 로그인)이 점검 때마다 새 사건으로 쌓인다.
@@ -52,10 +54,12 @@ export function createFinalApp({ engine, scanner, sampler = createSampler(), his
     socParts = { store, monitor };
     // PC 보안 점검기: 조치 전 값(되돌리기용)만 파일에 남긴다
     audit = createKisaAudit({ logFile: join(dataDir, 'remediation-log.json') });
+    // AI 에이전트 감사 훅 연결(화면의 「이 PC에 감시 연결」 버튼)
+    agentHooks = createAgentHooks({ dataDir });
     server.once('listening', () => monitor.start());
     server.once('close', () => monitor.stop());
   }
-  attachPcStatus(server, { sampler, history, securityReader, soc: socParts, ti: tiParts, audit, engineMode: () => (engine && engine.evidenceMode) || 'disconnected' });
+  attachPcStatus(server, { sampler, history, securityReader, soc: socParts, ti: tiParts, audit, agentHooks, engineMode: () => (engine && engine.evidenceMode) || 'disconnected' });
   return server;
 }
 

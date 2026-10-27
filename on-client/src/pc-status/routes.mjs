@@ -51,8 +51,8 @@ const TI_GET = new Set(['/api/soc/ti/state', '/api/soc/ti/export']);
 const TI_POST = new Set(['/api/soc/ti/ioc', '/api/soc/ti/ioc-delete', '/api/soc/ti/import', '/api/soc/ti/test-detect', '/api/soc/ti/feedback', '/api/soc/ti/scan']);
 const SOC_POST = new Set(['/api/soc/ack', '/api/soc/test-alert', '/api/soc/refresh-security']);
 // PC 보안 점검(KISA PC-01~18). 조치는 preview 가 준 일회용 승인 표(token)로만 apply 한다.
-const AUDIT_GET = new Set(['/api/soc/audit/state']);
-const AUDIT_POST = new Set(['/api/soc/audit/run', '/api/soc/audit/preview', '/api/soc/audit/apply', '/api/soc/audit/open']);
+const AUDIT_GET = new Set(['/api/soc/audit/state', '/api/soc/agent-hooks']);
+const AUDIT_POST = new Set(['/api/soc/audit/run', '/api/soc/audit/preview', '/api/soc/audit/apply', '/api/soc/audit/open', '/api/soc/agent-hooks/install']);
 
 function send(res, status, type, body) {
   res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', 'content-security-policy': CSP, 'x-content-type-options': 'nosniff' });
@@ -139,7 +139,7 @@ async function serveWallpaper(res) {
   res.end(data);
 }
 
-export function attachPcStatus(server, { sampler, history, securityReader, soc = null, ti = null, audit = null, engineMode = () => 'disconnected', clock = () => new Date() }) {
+export function attachPcStatus(server, { sampler, history, securityReader, soc = null, ti = null, audit = null, agentHooks = null, engineMode = () => 'disconnected', clock = () => new Date() }) {
   const originals = server.listeners('request');
   if (originals.length !== 1) throw Error('PC_STATUS_ATTACH_FAILED');
   const original = originals[0];
@@ -155,8 +155,8 @@ export function attachPcStatus(server, { sampler, history, securityReader, soc =
     const isSocPost = Boolean(soc) && SOC_POST.has(url.pathname);
     const isTiGet = Boolean(ti) && TI_GET.has(url.pathname);
     const isTiPost = Boolean(ti) && TI_POST.has(url.pathname);
-    const isAuditGet = Boolean(audit) && AUDIT_GET.has(url.pathname);
-    const isAuditPost = Boolean(audit) && AUDIT_POST.has(url.pathname);
+    const isAuditGet = Boolean(audit) && AUDIT_GET.has(url.pathname) && (url.pathname !== '/api/soc/agent-hooks' || Boolean(agentHooks));
+    const isAuditPost = Boolean(audit) && AUDIT_POST.has(url.pathname) && (url.pathname !== '/api/soc/agent-hooks/install' || Boolean(agentHooks));
     if (!isPage && !isApi && !isSecurityApi && !isSocGet && !isSocPost && !isTiGet && !isTiPost && !isAuditGet && !isAuditPost) {
       if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) { serveWithLink(original, server, req, res); return; }
       original.call(server, req, res);
@@ -208,6 +208,7 @@ export function attachPcStatus(server, { sampler, history, securityReader, soc =
         let body;
         try { body = await readJsonBody(req); } catch (error) { fail(res, error.code === 'TOO_LARGE' ? 413 : 400, error.code || 'BAD_REQUEST', '요청 본문을 확인하세요.'); return; }
         const reply = (data) => (data && data.error ? fail(res, 400, 'REJECTED', data.error) : sendJson(res, 200, { ok: true, data }));
+        if (url.pathname === '/api/soc/agent-hooks/install') { reply(agentHooks.install({ claude: body.claude !== false, codex: body.codex !== false })); return; }
         if (url.pathname === '/api/soc/audit/run') { reply(await audit.run()); return; }
         if (url.pathname === '/api/soc/audit/preview') { reply(audit.preview({ code: typeof body.code === 'string' ? body.code : null, fixId: typeof body.fixId === 'string' ? body.fixId : null, undoId: typeof body.undoId === 'string' ? body.undoId : null })); return; }
         if (url.pathname === '/api/soc/audit/apply') { if (typeof body.token !== 'string') { fail(res, 400, 'REJECTED', '승인 표가 없습니다.'); return; } reply(await audit.apply(body.token)); return; }
@@ -237,7 +238,7 @@ export function attachPcStatus(server, { sampler, history, securityReader, soc =
       }
 
       if (req.method !== 'GET') { fail(res, 405, 'METHOD_NOT_ALLOWED', 'GET만 지원합니다.'); return; }
-      if (isAuditGet) { sendJson(res, 200, { ok: true, data: audit.state() }); return; }
+      if (isAuditGet) { sendJson(res, 200, { ok: true, data: url.pathname === '/api/soc/agent-hooks' ? agentHooks.status() : audit.state() }); return; }
       if (isTiGet) {
         if (url.pathname === '/api/soc/ti/state') { sendJson(res, 200, { ok: true, data: ti.intel.snapshot() }); return; }
         const shareable = ti.iocs.exportable();

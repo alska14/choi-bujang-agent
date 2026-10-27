@@ -9,7 +9,6 @@ import { fileURLToPath } from 'node:url';
 
 const file = process.env.ON_SOC_AUDIT_FILE || join(process.env.LOCALAPPDATA || process.env.TEMP || '.', 'djokovic-soc', 'agent-audit.jsonl');
 const AGENTS = { claude: 'claude-code', codex: 'codex-cli' };
-const agentArg = String(process.argv[2] ?? 'claude').toLowerCase();
 
 const SECRET = [/\b(sk|pk|rk)-[A-Za-z0-9_-]{16,}\b/g, /\bgh[pousr]_[A-Za-z0-9]{20,}\b/g, /\bAKIA[0-9A-Z]{12,}\b/g, /(authorization:\s*bearer\s+)\S+/gi, /((?:password|passwd|pwd|secret|token|api[_-]?key)\s*[=:]\s*)\S+/gi, /(--(?:password|token|api-key)\s+)\S+/gi];
 const redact = (text) => SECRET.reduce((value, pattern) => value.replace(pattern, (match, prefix) => `${typeof prefix === 'string' ? prefix : ''}[삭제됨]`), String(text));
@@ -36,8 +35,11 @@ function readStdin() {
   });
 }
 
-async function main() {
-  const input = JSON.parse((await readStdin()).replace(/^﻿/, ''));
+// Node 로 직접 실행할 때와, Node.js 가 없는 PC에서 데스크톱 앱(Djokovic SOC.exe --audit-hook)이 불러 쓸 때 모두 이 함수를 쓴다.
+// inputText 를 주면 표준 입력 대신 그것을 쓴다(Electron 앱은 표준 입력 스트림을 읽지 못해 직접 읽어 넘긴다).
+export async function runHook(agent = process.argv[2], inputText = null) {
+  const agentArg = String(agent ?? 'claude').toLowerCase();
+  const input = JSON.parse((inputText ?? await readStdin()).replace(/^﻿/, ''));
   const toolInput = input.tool_input && typeof input.tool_input === 'object' ? input.tool_input : {};
   const tool = str(input.tool_name, 40) || 'unknown';
   const cwd = str(input.cwd, 400);
@@ -62,6 +64,6 @@ async function main() {
 
 // 테스트가 patchTargets 만 가져다 쓸 때는 실행하지 않는다.
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { await main(); } catch { /* 감사 기록 실패가 에이전트 동작을 막으면 안 된다 */ }
+  try { await runHook(process.argv[2]); } catch { /* 감사 기록 실패가 에이전트 동작을 막으면 안 된다 */ }
   process.exit(0);
 }

@@ -639,3 +639,6 @@ tr.audit-row.v-review > td:first-child { box-shadow: inset 4px 0 0 var(--warn-so
 :root[data-shell="app"] .top button, :root[data-shell="app"] .top a, :root[data-shell="app"] .top select, :root[data-shell="app"] .top input,
 :root[data-shell="app"] .top .counts, :root[data-shell="app"] .top .posture { -webkit-app-region: no-drag; }
 :root[data-shell="app"] .manual, :root[data-shell="app"] .alarm, :root[data-shell="app"] dialog, :root[data-shell="app"] .toasts, :root[data-shell="app"] .drawer { -webkit-app-region: no-drag; }
+/* 감사 훅 연결 */
+.hook-connect { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 8px; padding: 8px 10px; border-radius: 12px; background: var(--info-bg); }
+.hook-connect .note { flex: 1; margin: 0; min-width: 180px; }

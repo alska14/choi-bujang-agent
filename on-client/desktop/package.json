@@ -1,7 +1,7 @@
 {
   "name": "djokovic-soc-desktop",
   "productName": "Djokovic SOC",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "commonjs",
   "description": "Djokovic 보안 관제 데스크톱 앱: 관제 서버를 안에 품고, 관제 화면·막대 없는 미니 창·알림 영역 아이콘을 띄운다.",

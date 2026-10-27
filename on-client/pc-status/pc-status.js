@@ -319,13 +319,45 @@ function buildAgentPanel() {
     const dd = el('dd', null, '—'); agentRefs.values[key] = dd; agentRefs.kv.append(el('dt', null, label), dd);
   }
   agentRefs.lines = el('ul', 'lines');
+  // 이 PC의 Claude Code·Codex 설정에 감사 훅을 등록한다(다른 PC에 새로 설치했을 때 한 번 누르면 됨).
+  agentRefs.hookBox = el('div', 'hook-connect');
+  agentRefs.hookText = el('p', 'note', '감사 훅 연결 상태를 확인하는 중…');
+  agentRefs.hookBtn = el('button', 'solid-accent', '이 PC에 감시 연결');
+  agentRefs.hookBtn.type = 'button';
+  agentRefs.hookBtn.addEventListener('click', connectHooks);
+  agentRefs.hookBox.append(agentRefs.hookText, agentRefs.hookBtn);
   const how = el('details');
   how.append(el('summary', null, '수집을 켜는 방법·한계'),
     el('p', 'note', 'Windows는 일반 권한 앱에게 다른 프로그램의 파일 읽기를 알려 주지 않습니다. 그래서 이 패널은 에이전트의 훅(hook)이 남긴 기록만 볼 수 있습니다. 훅이 없으면 에이전트의 파일 접근은 보이지 않으며, 보이지 않는다고 안전하다는 뜻이 아닙니다.'),
     el('p', 'note', '켜려면 Claude Code 설정(settings.json)의 PreToolUse 훅에 tools\\agent-audit-hook.mjs 를 등록합니다. 자세한 방법은 docs/SOC_GUIDE.md.'));
-  panel.append(head, agentRefs.msg, agentRefs.kv, agentRefs.lines, how);
+  panel.append(head, agentRefs.msg, agentRefs.hookBox, agentRefs.kv, agentRefs.lines, how);
 }
 buildAgentPanel();
+async function loadHookStatus() {
+  try {
+    const res = await fetch('/api/soc/agent-hooks', { cache: 'no-store' });
+    const body = await res.json();
+    if (!body.ok) throw Error();
+    const s = body.data;
+    const part = (name, x) => (!x.found ? `${name} 설치 안 됨` : x.connected ? `${name} 연결됨` : `${name} 연결 안 됨`);
+    setText(agentRefs.hookText, `${part('Claude Code', s.claude)} · ${part('Codex CLI', s.codex)}${s.runner === 'none' ? ' · Node.js 없음' : ''}`);
+    agentRefs.hookBtn.textContent = (s.claude.found && !s.claude.connected) || (s.codex.found && !s.codex.connected) ? '이 PC에 감시 연결' : '다시 연결';
+  } catch { setText(agentRefs.hookText, '감사 훅 연결 상태를 확인하지 못했습니다.'); }
+}
+async function connectHooks() {
+  const ok = window.confirm('이 PC의 Claude Code 설정(%USERPROFILE%\\.claude\\settings.json)과 Codex 설정(%USERPROFILE%\\.codex\\hooks.json)에 감사 훅을 등록합니다.\n\n- 에이전트가 도구를 쓸 때 대상 경로·명령 일부를 이 PC의 감사 파일에 한 줄 남깁니다(에이전트 동작은 막지 않음).\n- 다른 설정은 건드리지 않고, 처음 바꾸기 전 원본을 .djokovic-backup 으로 남깁니다.\n- Codex 는 연결 뒤 /hooks 에서 신뢰로 한 번 표시해야 합니다.\n\n연결할까요?');
+  if (!ok) return;
+  agentRefs.hookBtn.disabled = true;
+  try {
+    const res = await post('/api/soc/agent-hooks/install', {});
+    const body = await res.json();
+    if (!body.ok) throw Error(body.error && body.error.message);
+    window.alert(body.data.results.map((r) => `${r.ok ? '✔' : '✖'} ${r.agent}: ${r.message}`).join('\n'));
+  } catch (e) { window.alert(`연결하지 못했습니다. ${e.message || ''}`); }
+  agentRefs.hookBtn.disabled = false;
+  loadHookStatus();
+}
+if (!state.pipMode) loadHookStatus();
 
 function renderAgent() {
   const agent = state.collectors && state.collectors.agent;

@@ -70,7 +70,8 @@ function startServer() {
   env.ELECTRON_RUN_AS_NODE = '1';
   env.ON_PORT = String(PORT);
   // Electron 안의 Node 로 서버 진입점을 실행한다(따로 Node.js 를 설치하지 않아도 됨).
-  child = spawn(process.execPath, [path.join(SERVER_ROOT, 'src', 'final-app.mjs')], { cwd: SERVER_ROOT, env, windowsHide: true, stdio: ['ignore', log, log] });
+  // 작업 폴더를 프로그램 폴더 밖(데이터 폴더)으로 둔다. 서버가 띄운 점검 PowerShell 이 프로그램 폴더를 쥐고 있으면 업데이트 때 폴더를 바꿀 수 없기 때문이다.
+  child = spawn(process.execPath, [path.join(SERVER_ROOT, 'src', 'final-app.mjs')], { cwd: DATA_DIR, env, windowsHide: true, stdio: ['ignore', log, log] });
   ownServer = true;
   child.on('exit', (code) => {
     child = null;
@@ -279,6 +280,7 @@ function paintTray() {
     updateMenuItem(),
     { label: `서버: ${ownServer ? '앱이 켠 서버' : '이미 켜져 있던 서버 사용'} · ${ORIGIN}`, enabled: false },
     { type: 'separator' },
+    ...(app.isPackaged && fs.existsSync(path.join(path.dirname(process.execPath), 'Uninstall.exe')) ? [{ label: '프로그램 제거…', click: () => { spawn(path.join(path.dirname(process.execPath), 'Uninstall.exe'), [], { detached: true, stdio: 'ignore' }).unref(); quitting = true; app.quit(); } }] : []),
     { label: '끝내기(감시 중지)', click: () => { quitting = true; app.quit(); } },
   ]));
 }
@@ -297,7 +299,16 @@ async function pollStatus() {
 }
 
 // ---------- 시작 ----------
-if (!app.requestSingleInstanceLock()) app.quit();
+// Node.js 가 없는 PC에서 Claude Code 감사 훅을 이 앱으로 실행한다(Djokovic SOC.exe --audit-hook claude).
+// 창·트레이·서버를 띄우지 않고 훅 기록 한 줄만 남기고 바로 끝낸다(단일 실행 잠금도 잡지 않음).
+const HOOK_AT = process.argv.indexOf('--audit-hook');
+if (HOOK_AT >= 0) {
+  const hookFile = path.join(process.env.LOCALAPPDATA || app.getPath('temp'), 'djokovic-soc', 'hooks', 'agent-audit-hook.mjs');
+  import(require('node:url').pathToFileURL(hookFile).href)
+    .then((m) => { let text = ''; try { text = fs.readFileSync(0, 'utf8'); } catch { text = ''; } return m.runHook(process.argv[HOOK_AT + 1], text); })
+    .catch(() => { /* 감사 기록 실패가 에이전트 동작을 막으면 안 된다 */ })
+    .finally(() => app.exit(0));
+} else if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => showMain());
   app.on('window-all-closed', (e) => { /* 트레이에서 계속 동작 */ });
@@ -316,6 +327,11 @@ else {
     setInterval(() => { pollStatus().catch(() => {}); }, 10000).unref?.();
     if (!HIDDEN) showMain();
     if (settings.mini) showMini(true);
+    // 업데이트로 버전이 바뀌었으면 한 번 알려 준다.
+    // (1.0.1 은 버전을 기록하지 않았으므로, 전에 쓰던 흔적이 있으면 「이전 버전」으로 적는다)
+    const prevVersion = settings.lastVersion || (settings.loginInitialized ? '이전 버전' : null);
+    if (prevVersion && prevVersion !== app.getVersion()) notify(`업데이트를 마쳤습니다: ${prevVersion} → ${app.getVersion()}`);
+    if (settings.lastVersion !== app.getVersion()) { settings.lastVersion = app.getVersion(); saveSettings(); }
     setTimeout(() => { checkUpdates().catch(() => {}); }, 30000);
     setInterval(() => { checkUpdates().catch(() => {}); }, 6 * 3600 * 1000).unref?.();
   });
