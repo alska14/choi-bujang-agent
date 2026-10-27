@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>내 PC 상태 · 케셰브</title>
+  <link rel="stylesheet" href="/pc-status/pc-status.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>내 PC 상태</h1>
+      <p class="lead">이 PC에서 방금 잰 CPU 사용률, 메모리 사용량, 디스크 남은 공간입니다. 이 화면의 값은 모두 실측이거나 확인 불가이며, 예시 값은 쓰지 않습니다.</p>
+    </div>
+    <a class="back" href="/">보안 앱으로 돌아가기</a>
+  </header>
+
+  <main>
+    <section class="controls" aria-labelledby="controls-title">
+      <h2 id="controls-title">측정</h2>
+      <div class="control-row">
+        <button type="button" id="measure-now">지금 측정</button>
+        <button type="button" id="auto-toggle" aria-pressed="false">자동 측정: 꺼짐</button>
+      </div>
+      <p class="hint">자동 측정은 켜기 전까지 동작하지 않으며, 켜면 5초 간격으로 측정합니다. 측정 요청이 실패하면 자동으로 꺼집니다.</p>
+      <p id="notice" role="status" aria-live="polite">아직 측정하지 않았습니다.</p>
+    </section>
+
+    <section aria-labelledby="cards-title">
+      <h2 id="cards-title">현재 값</h2>
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <section aria-labelledby="history-title">
+      <h2 id="history-title">최근 측정 기록</h2>
+      <p class="hint">서버 메모리에만 최근 20회를 보관합니다. 파일에 저장하지 않으며 서버를 끄면 사라집니다.</p>
+      <div id="history" class="table-wrap"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/pc-status/pc-status.js"></script>
+</body>
+</html>
