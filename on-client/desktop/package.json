@@ -1,0 +1,53 @@
+{
+  "name": "djokovic-soc-desktop",
+  "productName": "Djokovic SOC",
+  "version": "1.0.1",
+  "private": true,
+  "type": "commonjs",
+  "description": "Djokovic 보안 관제 데스크톱 앱: 관제 서버를 안에 품고, 관제 화면·막대 없는 미니 창·알림 영역 아이콘을 띄운다.",
+  "author": "alska14",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "icons": "electron make-icons.js",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "kr.aleph.djokovic.soc",
+    "productName": "Djokovic SOC",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "updater.js", "update-key.pub.pem", "assets/**"],
+    "asar": true,
+    "extraResources": [
+      { "from": "../src", "to": "server/src" },
+      { "from": "../public", "to": "server/public" },
+      { "from": "../student", "to": "server/student" },
+      { "from": "../pc-status", "to": "server/pc-status" },
+      { "from": "../vendor", "to": "server/vendor" },
+      { "from": "../tools", "to": "server/tools" },
+      { "from": "../package.json", "to": "server/package.json" }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "installerLanguages": ["ko_KR"],
+      "language": "1042",
+      "perMachine": false,
+      "allowElevation": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Djokovic 보안 관제",
+      "uninstallDisplayName": "Djokovic 보안 관제",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

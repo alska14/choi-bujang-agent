@@ -1,0 +1,4 @@
+/* 메인 화면 구석에 붙는 "보안 관제 열기" 링크. 메인 화면 파일은 건드리지 않고 서버가 응답에 덧붙인다. */
+.soc-link { position: fixed; right: 16px; bottom: 16px; z-index: 2147483000; padding: 9px 16px; border-radius: 999px; background: #1b2040; color: #eef0ff; border: 2px solid #9d8cff; font: 600 14px "Segoe UI", "Malgun Gothic", sans-serif; text-decoration: none; box-shadow: 0 4px 16px rgba(0, 0, 0, .45); }
+.soc-link:hover { background: #9d8cff; color: #0b0d1a; }
+.soc-link:focus-visible { outline: 3px solid #ffc531; outline-offset: 2px; }
