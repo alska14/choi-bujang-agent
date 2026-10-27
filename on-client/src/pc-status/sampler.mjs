@@ -9,7 +9,7 @@ const round1 = (value) => Math.round(value * 10) / 10;
 const finite = (value) => typeof value === 'number' && Number.isFinite(value);
 
 const measured = (fields, measuredAt) => ({ status: 'measured', measuredAt, ...fields });
-const unavailable = (reason, measuredAt, unit) => ({ status: 'unavailable', measuredAt, unit, reason });
+const unavailable = (reason, measuredAt, unit, code = 'READ_FAILED') => ({ status: 'unavailable', measuredAt, unit, reason, code });
 
 function cpuTotals(cpus) {
   let idle = 0;
@@ -33,11 +33,11 @@ export function createSampler({ osModule = os, fsModule = fs, now = () => new Da
     if (!totals) return unavailable('CPU 시간 정보를 읽지 못했습니다.', at, '%');
     const before = previousCpu;
     previousCpu = { ...totals, atMs };
-    if (!before) return unavailable('첫 측정이라 비교할 이전 측정이 없습니다. 한 번 더 측정하면 표시됩니다.', at, '%');
+    if (!before) return unavailable('첫 측정이라 비교할 이전 측정이 없습니다. 한 번 더 측정하면 표시됩니다.', at, '%', 'FIRST_SAMPLE');
     const totalDelta = totals.total - before.total;
     const idleDelta = totals.idle - before.idle;
     if (!(totalDelta > 0) || idleDelta < 0 || idleDelta > totalDelta) {
-      return unavailable('직전 측정과의 간격이 너무 짧거나 값이 맞지 않아 계산할 수 없습니다.', at, '%');
+      return unavailable('직전 측정과의 간격이 너무 짧거나 값이 맞지 않아 계산할 수 없습니다.', at, '%', 'SHORT_INTERVAL');
     }
     return measured({
       value: round1((1 - idleDelta / totalDelta) * 100),

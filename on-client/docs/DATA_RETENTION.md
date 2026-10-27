@@ -10,6 +10,7 @@
 | 기본 실행(`start-alekov.ps1`, `npm start`, `npm run demo`)에서 앱이 만드는 데이터 | 만들지 않습니다. 서버·학생 코드·화면 코드에서 파일 쓰기(`writeFile`, `appendFile`, `createWriteStream`, `mkdir`), `localStorage`, `sessionStorage`, `indexedDB`, `document.cookie`를 검색했으나 없었습니다. | 보존할 것이 없습니다. | 코드 확인 |
 | 화면에 보이는 사용자·기기·세션·보안 기록·AI 설명·조치 상태 | 브라우저 화면과 서버 메모리에만 있습니다. 서버나 브라우저를 닫으면 사라집니다. | 보존하지 않습니다. 필요하면 원래 시스템(접근 제어·XDR)에서 다시 조회합니다. | 코드 확인 |
 | 내 PC 상태 측정 기록(`/pc-status`, 최근 20회의 CPU·메모리·디스크 값과 잰 시각) | 서버 메모리에만 있습니다. `src/pc-status/history.mjs`는 파일을 쓰지 않습니다. 서버를 끄면 사라집니다. | 보존하지 않습니다. 필요하면 다시 측정합니다. | `src/pc-status/*`, 코드 확인 |
+| 방화벽·네트워크·Windows 기록 조회 결과(`/api/pc-security`) | 저장하지 않습니다. 요청 때마다 읽어 화면에 보내고 끝납니다. 읽기 위해 `powershell.exe`를 고정 명령으로 실행하며 어떤 설정도 바꾸지 않습니다. | 보존하지 않습니다. | `src/pc-status/security-reader.mjs`, 코드 확인 |
 | 확인 티켓(조치 확인 번호) | 제공 화면 메모리에만 있습니다. 학생 함수에는 전달되지 않습니다. | 보존하지 않습니다. | `public/app.js`, 코드 확인 |
 | `.env` 값(비밀 포함 가능) | 각자의 PC. Git에서 제외합니다(`.gitignore`: `.env`, `.env.*`, 단 `.env.example`만 포함). 서버는 `.env` 파일을 읽지 않고 환경 변수만 읽습니다. | 저장소에 보존하지 않습니다. | 코드 확인 |
 | 조치 기록(`alekov_action_intents`, `alekov_action_state`, `alekov_action_audit` 표) | 조치를 켤 때(`--alekov-actions`와 `--alekov-actions-config`를 함께 지정) 운영자가 정한 기존 SQLite 파일에만 기록합니다. 기본 실행에서는 켜지지 않습니다. | 이 저장소의 보존 대상이 아닙니다. 운영자가 관리합니다. | `src/actions/store.mjs`, `src/server.mjs`, 코드 확인 |

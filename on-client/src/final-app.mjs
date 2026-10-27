@@ -7,11 +7,12 @@ import { demoEngine, loadEngine } from './engine.mjs';
 import { createProjectScanner } from './vulnerabilities/project-scan.mjs';
 import { createSampler } from './pc-status/sampler.mjs';
 import { createHistory } from './pc-status/history.mjs';
+import { createSecurityReader } from './pc-status/security-reader.mjs';
 import { attachPcStatus } from './pc-status/routes.mjs';
 
-export function createFinalApp({ engine, scanner, sampler = createSampler(), history = createHistory() } = {}) {
+export function createFinalApp({ engine, scanner, sampler = createSampler(), history = createHistory(), securityReader = createSecurityReader() } = {}) {
   const server = createOnServer({ engine, scanner });
-  attachPcStatus(server, { sampler, history });
+  attachPcStatus(server, { sampler, history, securityReader, engineMode: () => (engine && engine.evidenceMode) || 'disconnected' });
   return server;
 }
 
