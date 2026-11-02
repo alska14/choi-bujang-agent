@@ -1053,6 +1053,20 @@ paintTheme();
 
 // ---------- 바탕화면 비침: 켜기·끄기 버튼(아이콘이 바뀜)과 투명도 버튼(반투명 / 완전 투과) ----------
 // data-glass: on(반투명) · clear(완전 투과) · off(바탕화면 끔, 불투명한 판). 끌 때도 투명도 선택은 기억해 두었다가 다시 켤 때 쓴다.
+// 화면 모양: 차분함(calm, 기본) ↔ 컬러풀(vivid). 차분함은 어두운 회색 바탕에 색은 위험할 때만 쓴다.
+function paintLook() {
+  const calm = document.documentElement.getAttribute('data-look') !== 'vivid';
+  const b = $('look-toggle');
+  b.setAttribute('aria-pressed', String(calm));
+  toolText(b, calm ? '화면 모양: 차분함 · 누르면 컬러풀' : '화면 모양: 컬러풀 · 누르면 차분함');
+}
+$('look-toggle').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-look') === 'vivid' ? 'calm' : 'vivid';
+  document.documentElement.setAttribute('data-look', next);
+  writeSetting('soc.look', next);
+  paintLook();
+});
+paintLook();
 function glassMode() { const v = document.documentElement.getAttribute('data-glass'); return v === 'clear' || v === 'off' ? v : 'on'; }
 function glassLevel() { const v = readSetting('soc.glassLevel'); return v === 'clear' ? 'clear' : 'on'; }
 function applyGlass(next) {

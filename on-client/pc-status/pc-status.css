@@ -765,3 +765,113 @@ details.manual-tip p { margin: 4px 0 2px; font-size: 13px; line-height: 1.55; }
 /* 데스크톱 미니 창: 판을 더 투명하고 얇게 */
 body.pip-desktop .pip-standalone { padding: 8px 10px; border-color: transparent; box-shadow: 0 6px 24px rgba(0, 0, 0, .18); }
 @media (prefers-reduced-motion: reduce) { .pipview .pip-status.lv-critical, .pipview .pip-alarm, :is(body.pip-mode, body.pip-win):has(.pipview.state-critical)::after { animation: none; } }
+
+/* =====================================================================
+   차분한 모드(기본, data-look="calm"): 어두운 회색 바탕, 색은 위험할 때만
+   - 바탕 사진·유리 효과·그라데이션·색 아이콘·줄 전체 색 배경을 없앤다.
+   - 정상은 회색 글자, 주의는 노랑, 높음은 주황, 긴급은 빨강만 색으로 쓴다.
+   - 칸 안쪽 여백과 칸 사이 간격을 넓혀 한 번에 눈에 들어오는 양을 줄인다.
+   예전 모양은 도구 막대의 「화면 모양」 버튼으로 컬러풀로 바꾼다.
+   ===================================================================== */
+/* 유리 모드용 규칙(data-glass·data-theme·data-wall-tone)보다 우선하도록 선택자를 더 구체적으로 쓴다 */
+:root[data-look="calm"][data-glass][data-theme] {
+  color-scheme: dark;
+  --bg: #1a1b1e; --surface: #232529; --surface-2: #2b2d32;
+  --text: #e6e7ea; --muted: #9a9ea8; --line: rgba(255, 255, 255, .08);
+  --accent: #8eb3f0; --accent-2: #8eb3f0; --accent-ink: #111318;
+  --glass: var(--surface); --glass-2: var(--surface-2); --glass-frame: transparent; --glass-border: rgba(255, 255, 255, .07); --solid: #25272c;
+  --shadow: none; --shadow-lg: 0 18px 50px rgba(0, 0, 0, .5);
+  --ok: #9aa3ad; --ok-solid: #6f8f80; --ok-ink: #111318; --ok-bg: transparent;
+  --info: #8eb3f0; --info-bg: rgba(142, 179, 240, .1);
+  --warn: #e0b84f; --warn-solid: #e0b84f; --warn-ink: #1d1700; --warn-bg: rgba(224, 184, 79, .1);
+  --high: #ea8a58; --high-solid: #ea8a58; --high-bg: rgba(234, 138, 88, .12);
+  --crit: #ee6a7e; --crit-solid: #d6384f; --crit-bg: rgba(238, 106, 126, .12);
+  --unk: #7f8590; --unk-bg: rgba(127, 133, 144, .1);
+  --veil: rgba(26, 27, 30, .92);
+  --scene: none;
+}
+:root[data-look="calm"] body { background-image: none !important; background-color: var(--bg); }
+:root[data-look="calm"] .frame { margin: 0; padding: 18px 24px 14px; gap: 18px; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+:root[data-look="calm"] .card, :root[data-look="calm"] .kpi-cell, :root[data-look="calm"] .trend-card, :root[data-look="calm"] .donut-card,
+:root[data-look="calm"] .domain, :root[data-look="calm"] .stage, :root[data-look="calm"] .tools, :root[data-look="calm"] .dock, :root[data-look="calm"] .layoutbar {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+:root[data-look="calm"] .card, :root[data-look="calm"] .trend-card, :root[data-look="calm"] .donut-card { padding: 16px 20px; }
+:root[data-look="calm"] .kpi-cell { padding: 14px 18px; }
+:root[data-look="calm"] .kpi-cell.lv-critical, :root[data-look="calm"] .kpi-cell.lv-warn { background: var(--surface); }
+:root[data-look="calm"] .kpi-cell.lv-critical { border-color: var(--crit-solid); }
+:root[data-look="calm"] .kpi-cell.lv-warn { border-color: var(--warn-solid); }
+:root[data-look="calm"] .kpi { gap: 14px; }
+:root[data-look="calm"] .middle { gap: 22px; }
+:root[data-look="calm"] .content { gap: 14px; }
+/* 아이콘: 색을 빼고 회색으로 */
+:root[data-look="calm"] .icon { filter: grayscale(1) brightness(1.25) contrast(.9); opacity: .8; }
+:root[data-look="calm"] .tool:hover .icon, :root[data-look="calm"] .tool[aria-pressed="true"] .icon, :root[data-look="calm"] .dock button[aria-pressed="true"] .icon { opacity: 1; }
+:root[data-look="calm"] .kpi-icon, :root[data-look="calm"] .avatar { background: var(--surface-2); }
+:root[data-look="calm"] .tool { background: transparent; border-color: transparent; box-shadow: none; }
+:root[data-look="calm"] .tool:hover { background: var(--surface-2); }
+:root[data-look="calm"] .tools { padding: 12px 8px; gap: 10px; }
+/* 제목·머리줄 */
+:root[data-look="calm"] .who, :root[data-look="calm"] .viewhead > div:first-child { background: transparent; border: 0; padding: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+:root[data-look="calm"] .viewhead h1 { font-size: 22px; font-weight: 700; }
+:root[data-look="calm"] .live-on { color: var(--muted); }
+:root[data-look="calm"] .posture { background: transparent; border-color: var(--line); }
+:root[data-look="calm"] .posture.lv-normal .posture-label, :root[data-look="calm"] .posture.lv-unknown .posture-label { color: var(--muted); font-weight: 600; }
+:root[data-look="calm"] .posture.lv-warn { background: var(--warn-bg); border-color: var(--warn-solid); }
+:root[data-look="calm"] .posture.lv-high { background: var(--high-bg); border-color: var(--high-solid); }
+:root[data-look="calm"] .posture.lv-critical { background: var(--crit-solid); border-color: var(--crit-solid); animation: none; }
+/* 아래 탭·칩·알약 */
+:root[data-look="calm"] .dock { padding: 6px; }
+:root[data-look="calm"] .dock button { color: var(--muted); }
+:root[data-look="calm"] .dock button:hover { background: var(--surface-2); color: var(--text); }
+:root[data-look="calm"] .dock button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+:root[data-look="calm"] .chip { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 600; }
+:root[data-look="calm"] .chip.lv-warn { color: var(--warn); border-color: var(--warn-solid); }
+:root[data-look="calm"] .chip.lv-high { color: var(--high); border-color: var(--high-solid); }
+:root[data-look="calm"] .chip.lv-critical { color: #fff; background: var(--crit-solid); border-color: var(--crit-solid); }
+:root[data-look="calm"] .count { background: transparent; border-color: var(--line); color: var(--muted); }
+:root[data-look="calm"] .count.sev-high { background: transparent; color: var(--high); border-color: var(--high-solid); }
+:root[data-look="calm"] .count.sev-medium { background: transparent; color: var(--warn); border-color: var(--warn-solid); }
+:root[data-look="calm"] .count.sev-critical { background: var(--crit-solid); border-color: var(--crit-solid); color: #fff; }
+/* 영역 점검 줄·사건 줄: 색 배경을 없애고 왼쪽 가는 막대만 */
+:root[data-look="calm"] .dline { background: transparent; padding: 9px 8px; border-left-width: 2px; }
+:root[data-look="calm"] .dline.lv-normal, :root[data-look="calm"] .dline.lv-unknown { border-left-color: transparent; }
+:root[data-look="calm"] .dline.lv-normal .mark, :root[data-look="calm"] .dline.lv-unknown .mark { color: var(--unk); }
+:root[data-look="calm"] .dline:hover { background: var(--surface-2); }
+:root[data-look="calm"] .dline .dtext { color: var(--text); }
+:root[data-look="calm"] .dline.lv-warn .dtext { color: var(--warn); }
+:root[data-look="calm"] .dline.lv-critical .dtext { color: var(--crit); }
+:root[data-look="calm"] tr.row { background: transparent !important; }
+:root[data-look="calm"] tr.row .msg-title { color: var(--text) !important; font-weight: 600; }
+:root[data-look="calm"] tr.row.sev-high .cell-sev, :root[data-look="calm"] tr.row.sev-high .msg-title { color: var(--high) !important; }
+:root[data-look="calm"] tr.row.sev-critical .cell-sev, :root[data-look="calm"] tr.row.sev-critical .msg-title { color: var(--crit) !important; }
+:root[data-look="calm"] tr.row.sev-medium .cell-sev { color: var(--warn); }
+:root[data-look="calm"] tr.row.sev-low .cell-sev, :root[data-look="calm"] tr.row.sev-info .cell-sev { color: var(--muted); }
+:root[data-look="calm"] tr.row.sev-info, :root[data-look="calm"] tr.row.sev-low { box-shadow: none; }
+:root[data-look="calm"] td { padding: 11px 10px; }
+:root[data-look="calm"] th { background: var(--surface); }
+:root[data-look="calm"] tr.audit-row.v-good > td:first-child { box-shadow: none; }
+:root[data-look="calm"] .audit-verdict.lv-normal { color: var(--muted); }
+:root[data-look="calm"] .audit-chip { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+:root[data-look="calm"] .audit-chip.lv-critical { color: var(--crit); border-color: var(--crit-solid); }
+:root[data-look="calm"] .audit-chip.lv-warn { color: var(--warn); border-color: var(--warn-solid); }
+/* 영역 카드·차트·버튼 */
+:root[data-look="calm"] .domain { padding: 14px 18px; }
+:root[data-look="calm"] .domain.lv-warn { border-color: rgba(224, 184, 79, .45); }
+:root[data-look="calm"] .domain.lv-critical { border-color: var(--crit-solid); }
+:root[data-look="calm"] .donut-seg.sev-low, :root[data-look="calm"] .donut-seg.sev-info { stroke: #5b6270; }
+:root[data-look="calm"] .donut-legend .sev-low .dl-fill, :root[data-look="calm"] .donut-legend .sev-info .dl-fill { background: #5b6270; }
+:root[data-look="calm"] button { background: var(--surface-2); border-color: var(--line); }
+:root[data-look="calm"] button:hover { border-color: rgba(255, 255, 255, .18); }
+:root[data-look="calm"] button.quiet { background: transparent; }
+:root[data-look="calm"] .tool { background: transparent; }
+:root[data-look="calm"] .solid-accent { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+:root[data-look="calm"] .solid-red { background: var(--crit-solid); border-color: var(--crit-solid); }
+:root[data-look="calm"] select, :root[data-look="calm"] input[type="text"], :root[data-look="calm"] textarea { background: var(--surface-2); border-color: var(--line); }
+:root[data-look="calm"] .legend summary { background: var(--surface); border-color: var(--line); }
+:root[data-look="calm"] .toast, :root[data-look="calm"] .drawer, :root[data-look="calm"] .slide, :root[data-look="calm"] .manual-box { background: var(--solid); }
+:root[data-look="calm"] .tool-label { background: var(--surface-2); color: var(--text); box-shadow: 0 6px 18px rgba(0, 0, 0, .4); }
+:root[data-look="calm"] .t-area { opacity: .06; }
+:root[data-look="calm"] .t-line { stroke-width: 1.8; }
+:root[data-look="calm"] .t-line.t-memory { stroke: #7d8794; }
+:root[data-look="calm"] .t-area.t-memory, :root[data-look="calm"] .t-dot.t-memory { fill: #7d8794; }
