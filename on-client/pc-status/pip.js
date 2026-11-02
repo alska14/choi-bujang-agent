@@ -135,7 +135,7 @@ function createView() {
         signature = sig;
         list.replaceChildren(...rows.map((e) => { const li = el('li', `sev-${e.severity}${e.ack ? ' acked' : ''}`); li.append(el('span', 'pip-ev-mark', SEV[e.severity][0]), el('span', 'pip-ev-time', hhmmss(e.lastAt)), el('span', 'pip-ev-title', clip(e.count > 1 ? `${e.title} ×${e.count}` : e.title, 80))); li.title = e.detail || e.title; return li; }));
       }
-      setText(empty, rows.length ? '' : `표시할 사건 없음(${MIN_RANK[opts.minRank]}${opts.unackedOnly ? ', 미확인만' : ''}). 이상이 없다는 뜻은 아닙니다`);
+      setText(empty, rows.length ? '' : `표시할 사건 없음(${MIN_RANK[opts.minRank]}${opts.unackedOnly ? ', 미확인만' : ''})`);
       setHidden(empty, rows.length > 0);
     } }; }
   // 영역 3종
@@ -163,7 +163,7 @@ function createView() {
     render(opts) {
       const data = ui.pipData();
       root.style.setProperty('--pip-scale', String(SCALE[opts.scale][1]));
-      setClass(root, `pipview cols-${opts.columns}`);
+      setClass(root, `pipview cols-${opts.columns} state-${data.posture.level}`);
       const critical = data.critical;
       setHidden(alarm, critical.length === 0);
       if (critical.length) {
