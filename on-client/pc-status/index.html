@@ -257,7 +257,7 @@
               <img class="icon" src="/pc-status/icons/audit.svg" alt="" width="52" height="52">
               <div class="audit-intro">
                 <h3 id="audit-title">PC 보안 점검 · KISA PC-01~PC-18</h3>
-                <p>수업 워크시트(PC보안점검_워크시트)의 18개 항목을 이 PC에서 자동으로 검사합니다. 검사는 설정을 <b>읽기만</b> 합니다. 바꾸는 것은 항목마다 「자동 조치」를 눌러 확인 창에서 승인할 때뿐이고, 관리자 권한이 필요한 조치는 Windows 권한 확인 창이 한 번 더 뜹니다.</p>
+                <p>수업 워크시트의 18개 항목을 검사합니다. 설정은 읽기만 하고, 「점검 실행」을 눌러야 시작합니다. 바꾸는 것은 확인 창에서 승인한 조치뿐입니다.</p>
               </div>
               <div class="audit-buttons">
                 <button type="button" id="audit-run" class="solid-accent">점검 실행</button>
@@ -352,6 +352,18 @@
       <button type="button" data-view-tab="audit" aria-pressed="false"><img class="icon" src="/pc-status/icons/audit.svg" alt="" width="22" height="22">PC 점검</button>
     </nav>
   </div>
+
+  <div id="slide-back" class="slide-back" hidden></div>
+  <aside id="slide" class="slide" role="dialog" aria-modal="true" aria-labelledby="slide-title" hidden>
+    <header class="slide-head">
+      <span id="slide-chip" class="slide-chip">상세</span>
+      <button type="button" id="slide-close" class="slide-x" aria-label="닫기">✕</button>
+    </header>
+    <h2 id="slide-title" class="slide-title"></h2>
+    <p id="slide-sub" class="slide-sub"></p>
+    <div id="slide-body" class="slide-body"></div>
+    <footer id="slide-actions" class="slide-actions"></footer>
+  </aside>
 
   <aside id="pip-drawer" class="drawer" aria-labelledby="pip-title" hidden></aside>
   <div id="pip-standalone" class="pip-standalone"></div>

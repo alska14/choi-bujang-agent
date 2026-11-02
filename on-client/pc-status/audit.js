@@ -52,24 +52,41 @@ function renderTable() {
     const tr = el('tr', `audit-row v-${item.verdict}`);
     tr.dataset.code = item.code;
     const name = el('td', 'audit-name');
-    name.append(el('strong', null, item.title), el('small', null, `${item.category} · 양호 기준: ${item.good}`));
+    name.append(el('strong', null, item.title));
     const evidence = el('td', 'audit-evidence');
-    evidence.append(el('div', null, item.evidence || ''), ...(item.reason ? [el('small', null, item.reason)] : []));
-    // 표 칸(td)에 flex 를 주면 표 줄 맞춤이 깨지므로 안쪽 div 에 준다.
+    evidence.append(el('div', 'audit-one', item.evidence || ''));
+    // 표 칸(td)에 flex 를 주면 표 줄 맞춤이 깨지므로 안쪽 div 에 준다. 목록에는 짧은 버튼만 두고 나머지는 옆 창에 둔다.
     const actCell = el('td', 'audit-act');
     const act = el('div', 'audit-act-inner');
     actCell.append(act);
-    for (const fix of item.fixes || []) act.append(fixButton(item, fix));
-    for (const target of item.opens || []) {
-      const b = el('button', 'quiet', `${OPEN_LABEL[target] || '설정'} 열기`);
-      b.type = 'button';
-      b.title = '해당 Windows 설정 화면만 엽니다(아무것도 바꾸지 않음).';
-      b.addEventListener('click', async () => { try { const d = await api('/api/soc/audit/open', { target }); msg(d.opened ? `「${d.label}」 화면을 열었습니다.` : `「${d.label}」 화면을 열지 못했습니다(이 Windows 에디션에 없을 수 있음).`); } catch (e) { msg(e.message); } });
-      act.append(b);
-    }
+    const detail = () => openAuditDetail(item);
+    if ((item.fixes || []).length) { const b = el('button', 'solid-accent', '자동 조치'); b.type = 'button'; b.title = '누르면 상세 창에서 무엇을 바꾸는지 확인한 뒤 실행합니다.'; b.addEventListener('click', detail); act.append(b); }
+    const more = el('button', 'quiet', '자세히'); more.type = 'button'; more.addEventListener('click', detail); act.append(more);
+    tr.classList.add('clickable');
+    tr.tabIndex = 0;
+    tr.addEventListener('click', (ev) => { if (!ev.target.closest('button')) detail(); });
+    tr.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && !ev.target.closest('button')) { ev.preventDefault(); detail(); } });
     tr.append(el('td', 'audit-code', item.code), name, el('td', 'audit-imp', item.importance), el('td', `audit-verdict ${cls}`, `${glyph} ${label}`), evidence, actCell);
     return tr;
   }));
+}
+
+// 항목 하나의 자세한 내용: 기준, 확인한 값, 이유, 그리고 조치·설정 화면 열기 버튼
+function openAuditDetail(item) {
+  const tone = item.verdict === 'manual' ? 'unknown' : item.verdict;
+  const actions = [];
+  for (const fix of item.fixes || []) actions.push({ label: `${fix.label}${fix.admin ? ' (관리자)' : ''}`, primary: true, run: () => { window.socDetail.close(); askConfirm({ code: item.code, fixId: fix.id }); } });
+  for (const target of item.opens || []) actions.push({ label: `${OPEN_LABEL[target] || '설정'} 열기`, quiet: true, run: async () => { try { const d = await api('/api/soc/audit/open', { target }); msg(d.opened ? `「${d.label}」 화면을 열었습니다.` : `「${d.label}」 화면을 열지 못했습니다(이 Windows 에디션에 없을 수 있음).`); } catch (e) { msg(e.message); } } });
+  window.socDetail.open({
+    tone, title: `${item.code} · ${item.title}`, sub: `${item.category} · 중요도 ${item.importance}`,
+    sections: [
+      { title: '확인한 값', text: item.evidence },
+      { title: '이유·참고', text: item.reason },
+      { title: '양호 기준', text: item.good },
+      { title: '취약 기준', text: item.bad },
+    ],
+    actions,
+  });
 }
 
 function renderHistory() {
@@ -151,5 +168,6 @@ $('audit-csv').addEventListener('click', () => {
 
 $('audit-run').addEventListener('click', runAudit);
 // 탭을 처음 열 때 결과가 없으면 저절로 점검한다.
-document.querySelector('[data-view-tab="audit"]').addEventListener('click', async () => { await load(); if (!ui.result && !ui.busy) runAudit(); });
-if (!(location.hash === '#pip' || location.hash === '#pip-desktop')) load().then(() => { if (!ui.result && document.querySelector('main[data-view="audit"]:not([hidden])')) runAudit(); });
+// 점검은 「점검 실행」 버튼을 눌렀을 때만 돌린다(탭을 열거나 앱을 켤 때 저절로 시작하지 않는다). 이미 돌려 둔 결과가 있으면 그것만 보여 준다.
+document.querySelector('[data-view-tab="audit"]').addEventListener('click', () => { load(); });
+if (!(location.hash === '#pip' || location.hash === '#pip-desktop')) load();

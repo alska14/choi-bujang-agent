@@ -218,17 +218,18 @@ function buildRow(event) {
   const act = el('td', 'cell-act');
   const button = el('button', null, '확인');
   button.type = 'button';
-  button.addEventListener('click', () => { button.disabled = true; post('/api/soc/ack', { id: event.id }).catch(() => { button.disabled = false; }); });
+  button.addEventListener('click', () => { ackEvent(event.id, button); });
   const accept = el('button', 'quiet', '수용');
   accept.type = 'button';
   accept.title = '오탐이거나 알고 받아들이는 상태입니다. 같은 사건은 더 이상 올리지 않습니다.';
-  accept.addEventListener('click', () => {
-    accept.disabled = true;
-    post('/api/soc/ti/feedback', { eventId: event.id, verdict: 'benign' })
-      .then((response) => { if (!response.ok) { accept.disabled = false; return; } const e = state.events.get(event.id); if (e) { e.verdict = 'benign'; e.ack = true; } renderAll(); })
-      .catch(() => { accept.disabled = false; });
-  });
+  accept.addEventListener('click', () => { acceptEvent(event.id, accept); });
   act.append(button, accept);
+  // 줄을 누르면 오른쪽에서 상세 창이 나온다(버튼은 제외)
+  tr.classList.add('clickable');
+  tr.tabIndex = 0;
+  const open = () => { const e = state.events.get(event.id); if (e) openEventDetail(e); };
+  tr.addEventListener('click', (ev) => { if (!ev.target.closest('button')) open(); });
+  tr.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && !ev.target.closest('button')) { ev.preventDefault(); open(); } });
   tr.append(time, sev, src, msg, act);
   return { tr, time, sev, src, title, detail, rule, attack, button, accept };
 }
@@ -238,13 +239,10 @@ function patchRow(row, event) {
   setText(row.sev, `${SEV[event.severity].glyph} ${SEV[event.severity].label}`);
   setText(row.src, [DOMAIN[event.domain], SOURCE[event.source] || event.source].filter(Boolean).join(' · '));
   setText(row.title, event.count > 1 ? `${event.title}  ×${event.count}` : event.title);
-  setText(row.detail, event.detail);
-  setHidden(row.detail, !event.detail);
-  setText(row.rule, event.rule ? `규칙 ${event.rule.id}: ${event.rule.text}` : '');
-  setHidden(row.rule, !event.rule);
-  const techniques = event.attack && event.attack.length ? `ATT&CK ${event.attack.map((t) => `${t.id} ${t.name}`).join(' · ')}` : '';
-  setText(row.attack, techniques);
-  setHidden(row.attack, !techniques);
+  // 자세한 설명·규칙·ATT&CK 는 줄을 누르면 나오는 옆 창에 있다(목록은 한 줄로 짧게)
+  setHidden(row.detail, true);
+  setHidden(row.rule, true);
+  setHidden(row.attack, true);
   setHidden(row.button, event.ack);
   setHidden(row.accept, event.ack || event.test || !event.key);
 }
@@ -471,17 +469,92 @@ function paintLines(ref, lines) {
     let row = ref.lines.get(line.key);
     if (!row) {
       const li = el('li');
-      const mark = el('span', 'mark'), label = el('span', 'dlabel'), text = el('span', 'dtext');
-      li.append(mark, label, text);
-      row = { li, mark, label, text };
+      const mark = el('span', 'mark'), label = el('span', 'dlabel'), text = el('span', 'dtext'), chev = el('span', 'dchev', '›');
+      li.append(mark, label, text, chev);
+      li.tabIndex = 0;
+      row = { li, mark, label, text, line: null };
+      const open = () => { if (row.line) openLineDetail(row.line); };
+      li.addEventListener('click', open);
+      li.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); } });
       ref.lines.set(line.key, row);
     }
+    row.line = line;
     setClass(row.li, `dline lv-${line.level}`);
     setText(row.mark, GLYPH[line.level]);
     setText(row.label, line.label);
     setText(row.text, line.text);
     if (ref.list.children[index] !== row.li) ref.list.insertBefore(row.li, ref.list.children[index] || null);
   });
+}
+
+// ---------- 오른쪽에서 나오는 상세 창 ----------
+// 목록에는 짧은 한 줄만 두고, 자세한 설명은 줄을 누르면 오른쪽에서 밀려 나오는 이 창에 보여 준다.
+const TONE = { critical: ['긴급', 'crit'], high: ['높음', 'high'], medium: ['주의', 'warn'], low: ['낮음', 'info'], info: ['정보', 'info'], normal: ['정상', 'ok'], warn: ['주의', 'warn'], unknown: ['확인 불가', 'unk'], vuln: ['취약', 'crit'], good: ['양호', 'ok'], review: ['판단 필요', 'warn'] };
+let slideLastFocus = null;
+function openDetail({ tone = 'info', chip, title, sub = '', sections = [], actions = [] }) {
+  const [label, cls] = TONE[tone] || TONE.info;
+  const panel = $('slide');
+  slideLastFocus = document.activeElement;
+  panel.className = `slide tone-${cls}`;
+  setText($('slide-chip'), chip || label);
+  setText($('slide-title'), title);
+  setText($('slide-sub'), sub);
+  setHidden($('slide-sub'), !sub);
+  $('slide-body').replaceChildren(...sections.filter((x) => x && x.text).map((sec) => {
+    const box = el('section', 'slide-sec');
+    box.append(el('h3', null, sec.title), el('p', sec.mono ? 'mono' : null, sec.text));
+    return box;
+  }));
+  $('slide-actions').replaceChildren(...actions.map((a) => { const b = el('button', a.primary ? 'solid-accent' : a.quiet ? 'quiet' : null, a.label); b.type = 'button'; b.addEventListener('click', () => a.run(b)); return b; }));
+  setHidden($('slide-back'), false);
+  setHidden(panel, false);
+  void panel.offsetWidth; // 숨김을 푼 직후 한 번 배치를 계산해야 미끄러져 나오는 움직임이 시작된다
+  panel.classList.add('open');
+  $('slide-close').focus();
+}
+function closeDetail() {
+  const panel = $('slide');
+  if (panel.hidden) return;
+  panel.classList.remove('open');
+  setHidden($('slide-back'), true);
+  setTimeout(() => { if (!panel.classList.contains('open')) setHidden(panel, true); }, 220);
+  if (slideLastFocus && slideLastFocus.focus) { try { slideLastFocus.focus({ preventScroll: true }); } catch { /* 이미 사라진 요소 */ } }
+}
+$('slide-close').addEventListener('click', closeDetail);
+$('slide-back').addEventListener('click', closeDetail);
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('slide').hidden && $('manual').hidden) closeDetail(); });
+window.socDetail = { open: openDetail, close: closeDetail };
+
+function ackEvent(id, button) {
+  if (button) button.disabled = true;
+  return post('/api/soc/ack', { id }).catch(() => { if (button) button.disabled = false; });
+}
+function acceptEvent(id, button) {
+  if (button) button.disabled = true;
+  return post('/api/soc/ti/feedback', { eventId: id, verdict: 'benign' })
+    .then((response) => { if (!response.ok) { if (button) button.disabled = false; return; } const e = state.events.get(id); if (e) { e.verdict = 'benign'; e.ack = true; } renderAll(); })
+    .catch(() => { if (button) button.disabled = false; });
+}
+function openEventDetail(event) {
+  const techniques = event.attack && event.attack.length ? event.attack.map((t) => `${t.id} ${t.name}${t.confidence ? ` (연관 가능성 ${t.confidence}%)` : ''}`).join('\n') : '';
+  const actions = [];
+  if (!event.ack) actions.push({ label: '확인했음', primary: true, run: async (b) => { await ackEvent(event.id, b); closeDetail(); } });
+  if (!event.ack && !event.test && event.key) actions.push({ label: '수용(알고 있는 설정)', quiet: true, run: async (b) => { await acceptEvent(event.id, b); closeDetail(); } });
+  openDetail({
+    tone: event.severity,
+    title: `${event.test ? '[시험] ' : ''}${event.title}${event.count > 1 ? `  ×${event.count}` : ''}`,
+    sub: [DOMAIN[event.domain], SOURCE[event.source] || event.source, whenText(event.lastAt)].filter(Boolean).join(' · '),
+    sections: [
+      { title: '무슨 일인가요', text: event.detail },
+      { title: '왜 걸렸나요(규칙)', text: event.rule ? `${event.rule.id}\n${event.rule.text}` : '' },
+      { title: '관련 공격 수법(ATT&CK)', text: techniques },
+      { title: '처리 상태', text: event.ack ? `확인함${event.verdict === 'benign' ? '(수용)' : ''}` : '아직 확인하지 않음' },
+    ],
+    actions,
+  });
+}
+function openLineDetail(line) {
+  openDetail({ tone: line.level, title: line.label, sub: '점검 항목', sections: [{ title: '지금 상태', text: line.text }] });
 }
 
 function domainLevel(lines, domain) {

@@ -24,7 +24,7 @@ const SHOTS = [
   { name: 'iam', view: 'iam', marks: [['#d-iam li', '로컬 계정', 1], ['#d-iam li', '자동 로그인', 2], ['#d-iam li', '실행 중인 AI', 3], ['#d-iam li', '감사 훅', 4], ['#agent-panel', null, 5]] },
   { name: 'events', view: 'events', marks: [['#domain-filters', null, 1], ['#filters', null, 2], ['#feed-body tr', null, 3], ['#feed-body tr td:last-child', null, 4], ['#history-note', null, 5]] },
   { name: 'ti', view: 'ti', marks: [['.ti-intro .ti-steps', null, 1], ['#ti-pipeline', null, 2], ['#ioc-form', null, 3], ['#ti-pipeline button', '탐지 시험', 4]] },
-  { name: 'audit', view: 'audit', wait: 12000, marks: [['#audit-run', null, 1], ['#audit-summary', null, 2], ['#audit-body tr.v-vuln td.audit-act', null, 3], ['#audit-csv', null, 4], ['.audit-log', null, 5]] },
+  { name: 'audit', view: 'audit', prep: 'runAudit', prepWait: 13000, marks: [['#audit-run', null, 1], ['#audit-summary', null, 2], ['#audit-body tr.v-vuln td.audit-act', null, 3], ['#audit-csv', null, 4], ['.audit-log', null, 5]] },
   { name: 'alarm', view: 'dashboard', prep: 'showAlarmExample', marks: [['#alarm-title', null, 1], ['#alarm-ack', null, 2], ['#alarm-mute', null, 3]] },
   { name: 'layout', view: 'dashboard', prep: 'startLayoutEdit', marks: [['#preset-select', null, 1], ['#widget-add', null, 2], ['#menu-tools', null, 3], ['#w-trend .wbar', null, 4], ['#w-trend .wresize', null, 5], ['#layout-done', null, 6]] },
   { name: 'pip', view: 'dashboard', prep: 'openPipDrawer', marks: [['#pip-drawer .drawer-head', null, 1], ['#pip-drawer fieldset', null, 2], ['#pip-drawer .pip-preview', null, 3], ['#pip-drawer .solid-accent', null, 4]] },
@@ -54,6 +54,8 @@ const PREP = {
     document.getElementById('alarm-list').replaceChildren(li);
     document.getElementById('alarm-test').style.setProperty('display', 'none', 'important');
   })()`,
+  // PC 점검은 버튼을 눌러야 돌므로 찍기 전에 눌러 두고 결과가 나올 때까지 기다린다(prepWait).
+  runAudit: `document.getElementById('audit-run').click()`,
   startLayoutEdit: `document.getElementById('layout-edit').click()`,
   openPipDrawer: `document.getElementById('pip-open').click()`,
 };
@@ -121,7 +123,7 @@ async function run() {
     await sleep(shot.wait || 800);
     // 오른쪽 위 실시간 알림(토스트)이 설명할 부분을 가리지 않게 찍는 동안 숨긴다.
     await win.webContents.executeJavaScript(`(() => { document.getElementById('toasts').style.setProperty('display', 'none', 'important'); return true; })()`);
-    if (shot.prep) { await win.webContents.executeJavaScript(PREP[shot.prep]); await sleep(900); }
+    if (shot.prep) { await win.webContents.executeJavaScript(PREP[shot.prep]); await sleep(shot.prepWait || 900); }
     if (process.env.CAPTURE_REAL !== '1') await win.webContents.executeJavaScript(REDACT_JS);
     const missing = shot.marks ? await win.webContents.executeJavaScript(MARK_JS(shot.marks)) : [];
     await sleep(150);
